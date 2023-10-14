@@ -21,32 +21,74 @@ contract PublicSale is Pausable, AccessControl {
 
     event PurchaseNftWithId(address account, uint256 id);
 
-    constructor() {
+    IERC20 public BBTKN;
+    IERC20 public USDC;
+
+    mapping(uint256 => bool) public nftPurchased;
+
+    constructor(address _BBTKNAddress, address _USDCAddress) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
+        BBTKN = IERC20(_BBTKNAddress);
+        USDC = IERC20(_USDCAddress);
     }
 
-    function purchaseWithTokens(uint256 _id) public {
+    function purchaseWithTokens(uint256 _id) public whenNotPaused {
+        require(!nftPurchased[_id], "NFT already purchased");
+        require(_id >= 0 && _id <= 699, "Invalid NFT ID");
+
+        uint256 price = getPriceForId(_id);
+        require(
+            BBTKN.balanceOf(msg.sender) >= price,
+            "Insufficient BBTKN tokens"
+        );
+
+        BBTKN.transferFrom(msg.sender, address(this), price);
+
+        nftPurchased[_id] = true;
+
         emit PurchaseNftWithId(msg.sender, _id);
     }
 
-    function purchaseWithUSDC(uint256 _id, uint256 _amountIn) external {
-        // transfiere _amountIn de USDC a este contrato
-        // llama a swapTokensForExactTokens: valor de retorno de este metodo es cuanto gastaste del token input
-        // transfiere el excedente de USDC a msg.sender
+    function purchaseWithUSDC(uint256 _id) external {
+        require(!nftPurchased[_id], "NFT already purchased");
+        require(_id >= 0 && _id <= 699, "Invalid NFT ID");
+
+        uint256 price = getPriceForId(_id);
+        require(USDC.balanceOf(msg.sender) >= price, "Insufficient USDC tokens");
+
+        USDC.transferFrom(msg.sender, address(this), price);
+
+        nftPurchased[_id] = true;
 
         emit PurchaseNftWithId(msg.sender, _id);
     }
 
     function purchaseWithEtherAndId(uint256 _id) public payable {
+        // Implementación pendiente
         emit PurchaseNftWithId(msg.sender, _id);
     }
 
-    function depositEthForARandomNft() public payable {}
+    function depositEthForARandomNft() public payable {
+        // Implementación pendiente
+    }
 
     receive() external payable {
         depositEthForARandomNft();
+    }
+
+    function getPriceForId(uint256 _id) public view returns (uint256) {
+        if (_id >= 0 && _id <= 199) return 1000 * 10 ** 18;
+        if (_id >= 200 && _id <= 499) return _id * 20 * 10 ** 18;
+        if (_id >= 500 && _id <= 699) {
+            uint256 daysPassed = (block.timestamp - startDate) / 86400;
+            return
+                (10_000 + (2_000 * daysPassed)) * 10 ** 18 < MAX_PRICE_NFT
+                    ? (10_000 + (2_000 * daysPassed)) * 10 ** 18
+                    : MAX_PRICE_NFT;
+        }
+        revert("Invalid ID");
     }
 
     ////////////////////////////////////////////////////////////////////////

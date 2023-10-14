@@ -30,18 +30,61 @@ contract CuyCollectionNft is ERC721, Pausable, AccessControl, ERC721Burnable {
         return "ipfs://QmTWvm55znTX6NmgopdUpJX8CJsNzhGJY4bJVmMvoJP5hA/";
     }
 
+    function setMerkleRoot(bytes32 _root) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        root = _root;
+    }
+
+    //mappping para llevar la contabiolidad de los NFTs emitidos y quiemados
+    mapping(uint256 => mapping(address => bool)) public mintedNft;
+
+    function VerifyMerkleProof(
+        bytes32 leaf,
+        bytes32[] memory proof
+    ) public view returns (bool) {
+        return MerkleProof.verify(proof, root, leaf);
+    }
+
     function safeMint(
         address to,
         uint256 tokenId
-    ) public onlyRole(MINTER_ROLE) {}
+    ) public onlyRole(MINTER_ROLE) {
+        _safeMint(to, tokenId);
+        mintedNft[tokenId][to] = true;
+    }
 
     function safeMintWhiteList(
         address to,
         uint256 tokenId,
         bytes32[] calldata proofs
-    ) public {}
+    ) public {
+        //aplicar merkle treee para la lista de billeteras de la 1000 a al 1999
+        // Verificar que el tokenId esté en el rango de 1000 a 1999
+        require(tokenId >= 1000 && tokenId <= 1999, "TokenId not in range");
 
-    function buyBack(uint256 id) public {}
+        // Construir el leaf a partir del tokenId y la dirección
+        bytes32 leaf = keccak256(abi.encodePacked(tokenId, to));
+
+        // Verificar que la prueba sea válida
+        require(VerifyMerkleProof(leaf, proofs), "Invalid proof");
+
+        safeMint(to, tokenId);
+    }
+
+    function buyBack(uint256 tokenId) public {
+        // Verificar que el usuario es dueño del NFT que desea quemar
+        require(
+            ownerOf(tokenId) == msg.sender,
+            "You are not the owner of this NFT"
+        );
+        // doble chequeo para cpomprobaciones fuera del ERC721
+        require(mintedNft[tokenId][msg.sender], "Token already burned");
+        // Quemar el NFT
+        _burn(tokenId);
+        mintedNft[tokenId][msg.sender] = false; // Marcar este NFT como inactivo para este usuario
+
+        // Emitir evento Burn para indicar que el NFT fue quemado
+        emit Burn(msg.sender, tokenId);
+    }
 
     function pause() public onlyRole(PAUSER_ROLE) {
         _pause();
