@@ -7,7 +7,9 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import {IUniSwapV2Router02} from "./Interfaces.sol";
 
 contract PublicSale is Pausable, AccessControl {
-    IUniSwapV2Router02 router;
+    address USDCAddress; 
+    address routerAddress = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    IUniSwapV2Router02 router = IUniSwapV2Router02(routerAddress);
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -51,18 +53,72 @@ contract PublicSale is Pausable, AccessControl {
         emit PurchaseNftWithId(msg.sender, _id);
     }
 
-    function purchaseWithUSDC(uint256 _id) external {
+    function purchaseWithUSDC(uint256 usdcAmount , uint256 _id) external {
         require(!nftPurchased[_id], "NFT already purchased");
         require(_id >= 0 && _id <= 699, "Invalid NFT ID");
+        
+        // Lee llamaala metodo comparr con USDC 
+        // Lee tiene que dar un aprove al public sale opara que maneje sus usdc
+        //este aprove se llama desde el contrato USDC 
+
+        //una ves que se ha dado el aproove se puede llamar a trasnfer_From
+        // USDC.transferFrom(msg.sender, address(this), price);
+        // internamente, en transferFrom el msg.sender == PublicSale Sc , que es el spender 
+
+        // el SC PublicSale tiene un  sldo en usdc, en usdcAmount
+
+        // antes de llamar al router, el SC PublicSale tiene que darle allowance router 
+        // como publicsale le da allowande al conrtato router 
+
+        // usdc.apove (ruteraddress ,usdcAmount)
+        // internameinte en el metodo aprove el msg.sender == SC PubvlicSale , que es el dueño de los tokens 
+
+
+        //el SC PublñicSale antes de llamar al router debe poseer un balance en USDC (en la canbtidad de UsdcAmoun)
+
+        // llla ma al riuter con router.swapTokensForExactTokens(amountOut, amountInMax, path, to, deadline);
+        //el router sustrae los usdc  desde public salñe a cambio de lo s BBtokens que son entregado s l sc Pubicsale
+        // uint [ ] amount= router.swapTokensForExactTokens(amountOut, amountInMax, path, to, deadline);
+        // uint[0] = cantidad de Usdc realmente utilizados 
+        // if ( usdcAmopunt > amount[0] ){
+            //usdc.transfer(msg.sender , usdcAmount - amount[0]);
+            // en este caso los 
+
+        }
+        //finalemente emite el ev3ento de lla compra con usdc para que sea cpturado con el sentinel
+
 
         uint256 price = getPriceForId(_id);
-        require(USDC.balanceOf(msg.sender) >= price, "Insufficient USDC tokens");
+        require(
+            USDC.balanceOf(msg.sender) >= price,
+            "Insufficient USDC tokens"
+        );
 
         USDC.transferFrom(msg.sender, address(this), price);
 
         nftPurchased[_id] = true;
 
         emit PurchaseNftWithId(msg.sender, _id);
+    }
+
+    function _swapExactTokensForTokens(
+        uint amountOut,
+        uint amountInMax,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) internal   {
+        address origenToken = path[0];
+        IERC20(origenToken).approve(routerAddress, amountInMax);
+
+        uint[] memory _amounts = router.swapTokensForExactTokens(
+            amountOut,
+            amountInMax,
+            path,
+            to,
+            deadline
+        );
+    
     }
 
     function purchaseWithEtherAndId(uint256 _id) public payable {

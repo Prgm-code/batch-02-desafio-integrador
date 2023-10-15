@@ -76,13 +76,10 @@ contract CuyCollectionNft is ERC721, Pausable, AccessControl, ERC721Burnable {
             ownerOf(tokenId) == msg.sender,
             "You are not the owner of this NFT"
         );
-        // doble chequeo para cpomprobaciones fuera del ERC721
+      
         require(mintedNft[tokenId][msg.sender], "Token already burned");
-        // Quemar el NFT
         _burn(tokenId);
         mintedNft[tokenId][msg.sender] = false; // Marcar este NFT como inactivo para este usuario
-
-        // Emitir evento Burn para indicar que el NFT fue quemado
         emit Burn(msg.sender, tokenId);
     }
 
