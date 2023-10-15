@@ -1,0 +1,27 @@
+{
+    "name": "Común#104",
+    "description": "Escoger un nombre para tu colección",
+    "image": "ipfs://[enter the CID here]/104.png",
+    "attributes": [
+        {
+            "trait_type": "MANTO",
+            "value": "MANTO FRIO"
+        },
+        {
+            "trait_type": "BANCO",
+            "value": "TRONCO"
+        },
+        {
+            "trait_type": "CUY",
+            "value": "CUY HUACO"
+        },
+        {
+            "trait_type": "CHULLO",
+            "value": "CHULLO PERU"
+        },
+        {
+            "trait_type": "CARA",
+            "value": "BROMA"
+        }
+    ]
+}

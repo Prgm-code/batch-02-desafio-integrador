@@ -1,0 +1,27 @@
+{
+    "name": "Místico#734",
+    "description": "Escoger un nombre para tu colección",
+    "image": "ipfs://[enter the CID here]/734.png",
+    "attributes": [
+        {
+            "trait_type": "MANTO",
+            "value": "MANTO TIERRA"
+        },
+        {
+            "trait_type": "BANCO",
+            "value": "HIELO"
+        },
+        {
+            "trait_type": "CUY",
+            "value": "CUY HUACO"
+        },
+        {
+            "trait_type": "CHULLO",
+            "value": "CHULLO ROJO"
+        },
+        {
+            "trait_type": "CARA",
+            "value": "LASER"
+        }
+    ]
+}

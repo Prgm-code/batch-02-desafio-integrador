@@ -1,0 +1,27 @@
+{
+    "name": "Común#16",
+    "description": "Escoger un nombre para tu colección",
+    "image": "ipfs://[enter the CID here]/16.png",
+    "attributes": [
+        {
+            "trait_type": "MANTO",
+            "value": "MANTO FELICIDAD"
+        },
+        {
+            "trait_type": "BANCO",
+            "value": "HIELO"
+        },
+        {
+            "trait_type": "CUY",
+            "value": "CUY CEMENTO"
+        },
+        {
+            "trait_type": "CHULLO",
+            "value": "CHULLO SELVA"
+        },
+        {
+            "trait_type": "CARA",
+            "value": "LASER"
+        }
+    ]
+}

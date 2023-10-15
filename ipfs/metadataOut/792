@@ -1,0 +1,27 @@
+{
+    "name": "Místico#792",
+    "description": "Escoger un nombre para tu colección",
+    "image": "ipfs://[enter the CID here]/792.png",
+    "attributes": [
+        {
+            "trait_type": "MANTO",
+            "value": "MANTO SIERRA"
+        },
+        {
+            "trait_type": "BANCO",
+            "value": "METAL"
+        },
+        {
+            "trait_type": "CUY",
+            "value": "CUY FUEGO"
+        },
+        {
+            "trait_type": "CHULLO",
+            "value": "CHULLO CAJAMARCA"
+        },
+        {
+            "trait_type": "CARA",
+            "value": "COVID"
+        }
+    ]
+}

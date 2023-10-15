@@ -1,0 +1,27 @@
+{
+    "name": "Común#175",
+    "description": "Escoger un nombre para tu colección",
+    "image": "ipfs://[enter the CID here]/175.png",
+    "attributes": [
+        {
+            "trait_type": "MANTO",
+            "value": "MANTO FUEGO"
+        },
+        {
+            "trait_type": "BANCO",
+            "value": "EGIPCIO"
+        },
+        {
+            "trait_type": "CUY",
+            "value": "CUY HIELO"
+        },
+        {
+            "trait_type": "CHULLO",
+            "value": "CHULLO SELVA"
+        },
+        {
+            "trait_type": "CARA",
+            "value": "OJOS BASE"
+        }
+    ]
+}

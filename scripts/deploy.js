@@ -37,7 +37,8 @@ async function deployGoerli() {
   // deploySC;
   // var bbitesToken Contrato
   // deploySC;
-  // var usdc Contrato
+  // var usdc Contrato+
+
   // deploySC;
 
   // var impPS = await printAddress("PublicSale", await psC.getAddress());

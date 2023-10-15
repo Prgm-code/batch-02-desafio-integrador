@@ -1,0 +1,27 @@
+{
+    "name": "Común#77",
+    "description": "Escoger un nombre para tu colección",
+    "image": "ipfs://[enter the CID here]/77.png",
+    "attributes": [
+        {
+            "trait_type": "MANTO",
+            "value": "MANTO TIERRA"
+        },
+        {
+            "trait_type": "BANCO",
+            "value": "GRIEGO"
+        },
+        {
+            "trait_type": "CUY",
+            "value": "CUY HUACO"
+        },
+        {
+            "trait_type": "CHULLO",
+            "value": "GORRO PACHACUY"
+        },
+        {
+            "trait_type": "CARA",
+            "value": "COVID"
+        }
+    ]
+}
