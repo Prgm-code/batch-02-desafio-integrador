@@ -41,11 +41,22 @@ function cosntruyendoPruebas() {
 }
 
 function getRootFromMT() {
-  return "";
+  let elementosHasheados = walletAndIds.map(({id, address}) => {
+    return hashToken(id, address )
+  });
+  merkleTree = new MerkleTree(elementosHasheados, keccak256, {
+    sortPairs: true,
+  });
+  root = merkleTree.getHexRoot();
+
+  
+  console.log(root);
+
+  return root;
 }
 
-construyendoMerkleTree();
-cosntruyendoPruebas();
+// construyendoMerkleTree();
+// cosntruyendoPruebas();
 
 
 module.exports = { getRootFromMT };

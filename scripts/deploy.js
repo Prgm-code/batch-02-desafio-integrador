@@ -31,9 +31,10 @@ async function deployMumbai() {
 
 // Publicar UDSC, Public Sale y Bbites Token en Goerli
 async function deployGoerli() {
-  var relAddGoerli; // relayer goerli
+  var relAddGoerli; // relayer goerli para asignarle el rol de minter y burner lcon al funcion ex
+  
 
-  // var psC Contrato
+  // var psC Contrato proxy SC
   // deploySC;
   // var bbitesToken Contrato
   // deploySC;

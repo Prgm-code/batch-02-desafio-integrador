@@ -2,12 +2,24 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
 import {IUniSwapV2Router02} from "./Interfaces.sol";
 
-contract PublicSale is Pausable, AccessControl {
-    address USDCAddress; 
+contract PublicSale is
+    Initializable,
+    PausableUpgradeable,
+    AccessControlUpgradeable,
+    UUPSUpgradeable
+{
+    /*     address _BBTKNAddress =  0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95;
+    address USDCAddress; ]*/
     address routerAddress = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     IUniSwapV2Router02 router = IUniSwapV2Router02(routerAddress);
 
@@ -23,17 +35,21 @@ contract PublicSale is Pausable, AccessControl {
 
     event PurchaseNftWithId(address account, uint256 id);
 
-    IERC20 public BBTKN;
-    IERC20 public USDC;
+    IERC20 BBTKN;
+    IERC20 USDC;
 
     mapping(uint256 => bool) public nftPurchased;
 
-    constructor(address _BBTKNAddress, address _USDCAddress) {
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize() public initializer {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
-        BBTKN = IERC20(_BBTKNAddress);
-        USDC = IERC20(_USDCAddress);
+        BBTKN = IERC20(0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95);
+        USDC = IERC20(0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95);
     }
 
     function purchaseWithTokens(uint256 _id) public whenNotPaused {
@@ -53,7 +69,51 @@ contract PublicSale is Pausable, AccessControl {
         emit PurchaseNftWithId(msg.sender, _id);
     }
 
-    function purchaseWithUSDC(uint256 usdcAmount , uint256 _id) external {
+    function purchaseWithUSDC(
+        uint256 usdcAmount,
+        uint256 _id
+    ) public whenNotPaused {
+        require(!nftPurchased[_id], "NFT already purchased");
+        require(_id >= 0 && _id <= 699, "Invalid NFT ID");
+
+        uint256 priceInBBTKN = getPriceForId(_id);
+
+        //  msg.sender tiene suficientes USDC
+        USDC.approve(address(this), usdcAmount);
+
+        // Transferir USDC al contrato
+        USDC.transferFrom(msg.sender, address(this), usdcAmount);
+
+        // Definir la ruta de USDC a BBTKN
+        address[] memory path = new address[](2);
+        path[0] = 0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95;
+        path[1] = 0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95;
+
+        uint256 deadline = block.timestamp + 300; //  5 minutos para la transacción
+
+        //darle aprovve al router
+
+        USDC.approve(routerAddress, usdcAmount);
+
+        // Intercambiar USDC por BBTKN
+        uint[] memory amounts = router.swapTokensForExactTokens(
+            priceInBBTKN,
+            usdcAmount,
+            path,
+            msg.sender,
+            deadline
+        );
+
+        // Si no se utilizaron todos los USDC, devolver la diferencia al comprador
+        if (usdcAmount > amounts[0]) {
+            USDC.transfer(msg.sender, usdcAmount - amounts[0]);
+        }
+
+        nftPurchased[_id] = true;
+        emit PurchaseNftWithId(msg.sender, _id);
+    }
+
+    /*     function purchaseWithUSDC(uint256 usdcAmount , uint256 _id) external {
         require(!nftPurchased[_id], "NFT already purchased");
         require(_id >= 0 && _id <= 699, "Invalid NFT ID");
         
@@ -86,22 +146,9 @@ contract PublicSale is Pausable, AccessControl {
 
         }
         //finalemente emite el ev3ento de lla compra con usdc para que sea cpturado con el sentinel
+    } */
 
-
-        uint256 price = getPriceForId(_id);
-        require(
-            USDC.balanceOf(msg.sender) >= price,
-            "Insufficient USDC tokens"
-        );
-
-        USDC.transferFrom(msg.sender, address(this), price);
-
-        nftPurchased[_id] = true;
-
-        emit PurchaseNftWithId(msg.sender, _id);
-    }
-
-    function _swapExactTokensForTokens(
+    /*     function _swapExactTokensForTokens(
         uint amountOut,
         uint amountInMax,
         address[] calldata path,
@@ -119,15 +166,57 @@ contract PublicSale is Pausable, AccessControl {
             deadline
         );
     
-    }
+    } */
 
     function purchaseWithEtherAndId(uint256 _id) public payable {
+        uint256 priceInEther = 0.01 ether;
+        require(msg.value >= priceInEther, "Insufficient Ether sent");
+        require(!nftPurchased[_id] && _id >= 700 && _id < 1000, "invalid ID");
+        nftPurchased[_id] = true;
+
         // Implementación pendiente
         emit PurchaseNftWithId(msg.sender, _id);
+        if (msg.value > priceInEther) {
+            payable(msg.sender).transfer(msg.value - priceInEther);
+        }
     }
 
-    function depositEthForARandomNft() public payable {
-        // Implementación pendiente
+    function depositEthForARandomNft() public payable whenNotPaused {
+        uint256 maxAttempts = 300; // Esto representa la cantidad de IDs aleatorios posibles (999 - 700 + 1)
+        uint256 attempts = 0;
+        uint256 randomId;
+        bool isValid = false;
+
+        while (attempts < maxAttempts && !isValid) {
+            randomId = generateRandomId();
+            if (!nftPurchased[randomId]) {
+                isValid = true;
+            }
+            attempts++;
+        }
+
+        require(isValid, "No more available random IDs");
+
+        uint256 priceInEther = 0.01 ether;
+        require(msg.value >= priceInEther, "Insufficient Ether sent");
+
+        nftPurchased[randomId] = true;
+
+        //emite el evento para defender
+        emit PurchaseNftWithId(msg.sender, randomId);
+
+        // Devolver cualquier exceso de Ether al remitente
+        if (msg.value > priceInEther) {
+            payable(msg.sender).transfer(msg.value - priceInEther);
+        }
+    }
+
+    // Función auxiliar para generar un ID aleatorio
+    function generateRandomId() internal view returns (uint256) {
+        uint256 random = uint256(
+            keccak256(abi.encodePacked(block.timestamp, msg.sender))
+        ) % 300;
+        return 700 + random;
     }
 
     receive() external payable {
@@ -146,6 +235,22 @@ contract PublicSale is Pausable, AccessControl {
         }
         revert("Invalid ID");
     }
+    function version() public pure returns (uint256) {
+        return 1;
+        
+    }
+    function withdrawEther() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        payable(msg.sender).transfer(address(this).balance);
+    }
+
+    function withdrawTokens() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        BBTKN.transfer(msg.sender, BBTKN.balanceOf(address(this)));
+    }
+
+
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     ////////////////////////////////////////////////////////////////////////
     /////////                    Helper Methods                    /////////
