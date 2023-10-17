@@ -10,9 +10,18 @@ const {
 } = require("../utils");
 
 // Address del contrato proxy: 0x95821905e59E195C5232db0fC308991CE9581C5e
-async function main() {
+async function deployPublicSale () {
+    const BBTKNAddress ="0x000"
+    const USDCAddress = ""
+    const bbitesToken = await deploySC("PublicSale", [ BBTKNAddress, USDCAddress ]);
 
-    const bbitesToken = await deploySC("BBitesToken", []);
+}
+
+
+async function main() {
+    
+
+    const bbitesToken = await deploySC("BBitesToken", [  ]);
     /*  const BBitesToken = await ethers.getContractFactory("BBitesToken");
      const bbitesToken =  await upgrades.deployProxy(BBitesToken, [],{
          kind: "uups"

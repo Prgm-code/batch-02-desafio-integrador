@@ -19,7 +19,7 @@ contract PublicSale is
     UUPSUpgradeable
 {
     /*     address _BBTKNAddress =  0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95;
-    address USDCAddress; ]*/
+    address USDCAddress; */
     address routerAddress = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     IUniSwapV2Router02 router = IUniSwapV2Router02(routerAddress);
 
@@ -44,12 +44,13 @@ contract PublicSale is
         _disableInitializers();
     }
 
-    function initialize() public initializer {
+    function initialize(address _BBTKNaddress ,address _USDCaddress ) public initializer {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
-        BBTKN = IERC20(0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95);
-        USDC = IERC20(0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95);
+
+        BBTKN = IERC20(_BBTKNaddress);
+        USDC = IERC20(_USDCaddress); // completar con address definitivos
     }
 
     function purchaseWithTokens(uint256 _id) public whenNotPaused {
@@ -78,7 +79,7 @@ contract PublicSale is
 
         uint256 priceInBBTKN = getPriceForId(_id);
 
-        //  msg.sender tiene suficientes USDC
+        //  msg.sender da approve al contrat PS de usar USDC
         USDC.approve(address(this), usdcAmount);
 
         // Transferir USDC al contrato
@@ -86,8 +87,8 @@ contract PublicSale is
 
         // Definir la ruta de USDC a BBTKN
         address[] memory path = new address[](2);
-        path[0] = 0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95;
-        path[1] = 0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95;
+        path[0] = address(USDC); // remplazar por 
+        path[1] = address(BBTKN); // USDC0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95
 
         uint256 deadline = block.timestamp + 300; //  5 minutos para la transacción
 

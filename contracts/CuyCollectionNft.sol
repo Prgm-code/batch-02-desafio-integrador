@@ -51,7 +51,7 @@ contract CuyCollectionNft is ERC721, Pausable, AccessControl, ERC721Burnable {
         uint256 tokenId
     ) public onlyRole(MINTER_ROLE) {
         _safeMint(to, tokenId);
-        mintedNft[tokenId][to] = true;
+        //mintedNft[tokenId][to] = true;
     }
 
     function safeMintWhiteList(
@@ -79,9 +79,9 @@ contract CuyCollectionNft is ERC721, Pausable, AccessControl, ERC721Burnable {
             "You are not the owner of this NFT"
         );
       
-        require(mintedNft[tokenId][msg.sender], "Token already burned");
+        require(!mintedNft[tokenId][msg.sender], "Token already burned");
         _burn(tokenId);
-        mintedNft[tokenId][msg.sender] = false; // Marcar este NFT como inactivo para este usuario
+        mintedNft[tokenId][msg.sender] = true; // Marcar este NFT como inactivo para este usuario
         emit Burn(msg.sender, tokenId);
     }
 
