@@ -20,8 +20,6 @@ contract PublicSale is
 {
     /*     address _BBTKNAddress =  0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95;
     address USDCAddress; */
-    address routerAddress = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    IUniSwapV2Router02 router = IUniSwapV2Router02(routerAddress);
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -37,20 +35,28 @@ contract PublicSale is
 
     IERC20 BBTKN;
     IERC20 USDC;
+    address routerAddress;
+    IUniSwapV2Router02 router;
 
     mapping(uint256 => bool) public nftPurchased;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(address _BBTKNaddress ,address _USDCaddress ) public initializer {
+    function initialize(
+        address _BBTKNaddress,
+        address _USDCaddress
+    ) public initializer {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
 
         BBTKN = IERC20(_BBTKNaddress);
-        USDC = IERC20(_USDCaddress); // completar con address definitivos
+        USDC = IERC20(_USDCaddress);
+        routerAddress = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+        router = IUniSwapV2Router02(routerAddress);
     }
 
     function purchaseWithTokens(uint256 _id) public whenNotPaused {
@@ -87,7 +93,7 @@ contract PublicSale is
 
         // Definir la ruta de USDC a BBTKN
         address[] memory path = new address[](2);
-        path[0] = address(USDC); // remplazar por 
+        path[0] = address(USDC); // remplazar por
         path[1] = address(BBTKN); // USDC0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95
 
         uint256 deadline = block.timestamp + 300; //  5 minutos para la transacción
@@ -236,10 +242,11 @@ contract PublicSale is
         }
         revert("Invalid ID");
     }
+
     function version() public pure returns (uint256) {
         return 1;
-        
     }
+
     function withdrawEther() public onlyRole(DEFAULT_ADMIN_ROLE) {
         payable(msg.sender).transfer(address(this).balance);
     }
@@ -247,7 +254,6 @@ contract PublicSale is
     function withdrawTokens() public onlyRole(DEFAULT_ADMIN_ROLE) {
         BBTKN.transfer(msg.sender, BBTKN.balanceOf(address(this)));
     }
-
 
     function _authorizeUpgrade(
         address newImplementation
