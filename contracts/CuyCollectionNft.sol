@@ -1,15 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-    
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-    // convertir en UUPSUpgradeable
-contract CuyCollectionNft is ERC721, Pausable, AccessControl, ERC721Burnable {
+// convertir en UUPSUpgradeable
+contract CuyCollectionNft is
+    ERC721Upgradeable,
+    ERC721Burnable,
+    AccessControlUpgradeable,
+    UUPSUpgradeable
+{
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -19,17 +31,26 @@ contract CuyCollectionNft is ERC721, Pausable, AccessControl, ERC721Burnable {
     event Burn(address account, uint256 id);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
         string memory _name,
-        string memory _symbol
-    ) ERC721(_name, _symbol) {
+        string memory _symbol,
+        string memory baseURI
+    ) public initializer {
+        __ERC721_init(_name, _symbol);
+        __Ownable_init();
+        __UUPSUpgradeable_init();
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
+        _grantRole(UPGRADER_ROLE, msg.sender);
     }
 
     function _baseURI() internal pure override returns (string memory) {
-        return "ipfs://QmTWvm55znTX6NmgopdUpJX8CJsNzhGJY4bJVmMvoJP5hA/";
+        return "ipfs://QmSNfVcxnD3uqVwVwSQiqpGG5h6nCG6R4P8ocfM8w2MN6T/";
     }
 
     function setMerkleRoot(bytes32 _root) public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -74,29 +95,33 @@ contract CuyCollectionNft is ERC721, Pausable, AccessControl, ERC721Burnable {
 
     function buyBack(uint256 tokenId) public {
         // Verificar que el usuario es dueño del NFT que desea quemar
-        require(
+        /*         require(
             ownerOf(tokenId) == msg.sender,
             "You are not the owner of this NFT"
-        );
-      
+        );  */
+
         require(!mintedNft[tokenId][msg.sender], "Token already burned");
         _burn(tokenId);
         mintedNft[tokenId][msg.sender] = true; // Marcar este NFT como inactivo para este usuario
         emit Burn(msg.sender, tokenId);
     }
 
-    function pause() public onlyRole(PAUSER_ROLE) {
+    /*     function pause() public onlyRole(PAUSER_ROLE) {
         _pause();
     }
 
     function unpause() public onlyRole(PAUSER_ROLE) {
         _unpause();
-    }
+    } */
 
-    // The following functions are overrides required by Solidity.
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UPGRADER_ROLE) {}
+
+    /*     // The following functions are overrides required by Solidity.
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC721, AccessControl) returns (bool) {
+    ) public view override(ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
-    }
+    } */
 }

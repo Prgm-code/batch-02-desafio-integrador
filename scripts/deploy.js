@@ -67,7 +67,7 @@ async function deployGoerli() {
 
 
 
-  console.log("deployando consttrato liquidity con ", BBTKNimplAdd, USDCImplAdd, routerAddress, factoryAddress)
+  console.log("deployando consttrato liquidity con ", BBTKNProxyAddress, USDCImplAdd, routerAddress, factoryAddress)
 
   const liquidityProvider = await deploySCNoUp("LiquidityProvider", [
 
@@ -89,11 +89,11 @@ async function deployGoerli() {
 
 async function addLiquidity() {
   const [deployer] = await hre.ethers.getSigners();
-  const BBTKNProxyAddress = "0xFcEF0e23e7942185d6Cd0fCa5168fB3d1B0038A4"; // Dirección del proxy del BBTKN
-  const USDCAddress = "0x07842f6260bF596e92dc80925881CF6E1AD00d9C";
-  const liquidityProviderAddress = "0x1595D1D25d525D18dFCA75bfD5b26d387bfD9Bd3"
-  const amountADesired = pEth("10000000");  // Cantidad deseada para el BBTKN
-  const amountBDesired = 5000000 * (10 ** 6);  // Cantidad deseada para el USDC
+  const BBTKNProxyAddress = "0x329778a4DD06b05287514dC1142765FcBb73059D"; // Dirección del proxy del BBTKN
+  const USDCAddress = "0xE21faA53986d54c280392DecC2550c415d6EE439";
+  const liquidityProviderAddress = "0xd1CF0335ee7539f6A210E44A2C37784136A5fD50"
+  const amountADesired = pEth("1000000");  // Cantidad deseada para el BBTKN
+  const amountBDesired = 500000 * (10 ** 6);  // Cantidad deseada para el USDC
   const amountAMin = pEth("1000000"); // 1.000.000 
   const amountBMin = 500000 * (10 ** 6); // revisar decimales de USCD
   const to = await deployer.address;
@@ -161,8 +161,8 @@ async function addLiquidity() {
 }
 
 async function deployPublicSale() {
-  const _BBTKNAddress = "0xFcEF0e23e7942185d6Cd0fCa5168fB3d1B0038A4"; // Dirección del BBTKN
-  const _USDCAddress = "0x07842f6260bF596e92dc80925881CF6E1AD00d9C"; // Dirección del USDC
+  const _BBTKNAddress = "0x329778a4DD06b05287514dC1142765FcBb73059D"; // Dirección del BBTKN
+  const _USDCAddress = "0xE21faA53986d54c280392DecC2550c415d6EE439"; // Dirección del USDC
   
 
   const [deployer] = await hre.ethers.getSigners();
@@ -179,8 +179,8 @@ async function deployPublicSale() {
 }
 
 // deployMumbai()
- //deployGoerli()
-//addLiquidity()
+ // deployGoerli()
+ //addLiquidity()
    deployPublicSale()
   .catch((error) => {
     console.error(error);

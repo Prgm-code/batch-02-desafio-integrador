@@ -47,18 +47,18 @@ async function main() {
 }
 async function upgrade() {
 
-    const ProxyAddress = "0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95";
-    const BBitesToken = await ethers.getContractFactory("BBitesToken");
+    const ProxyAddress = "0x54e9e4cf20fca3dFB5b51f7C0e131f3e8382E514";
+    const BBitesToken = await ethers.getContractFactory("PublicSale");
     try {
         // Actualiza el contrato proxy
         const bBitesToken = await upgrades.upgradeProxy(ProxyAddress, BBitesToken);
         console.log(bBitesToken)
 
         // Imprime la dirección del proxy y la implementación
-        const implV3 = await printAddress("BBitesToken V2", ProxyAddress);
+        const implV3 = await printAddress("PublicSale V3", ProxyAddress);
 
         // Verifica el contrato
-        await verify(implV3, "BBitesToken");
+        await verify(implV3, "PublicSale");
 
     } catch (e) {
         return console.error("Error actualizando el contrato", e);

@@ -44,7 +44,7 @@ contract BBitesToken is
         _grantRole(UPGRADER_ROLE, msg.sender);
         
         // acuña un millón de tokens
-        _mint(msg.sender, 1_000_000 * 10 ** decimals());
+        _mint(msg.sender, 10_000_000 * 10 ** decimals());
     }
 
     function mint(

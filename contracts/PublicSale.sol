@@ -68,6 +68,9 @@ contract PublicSale is
             BBTKN.balanceOf(msg.sender) >= price,
             "Insufficient BBTKN tokens"
         );
+        //dar aprove al contrato para que pueda usar los tokens del usuario
+
+        BBTKN.approve(address(this), price); //revisar el aprove que debe reALIZAErce desde BBTKN
 
         BBTKN.transferFrom(msg.sender, address(this), price);
 
@@ -80,34 +83,33 @@ contract PublicSale is
         uint256 usdcAmount,
         uint256 _id
     ) public whenNotPaused {
+
+        // el aprove se realiza desde el front end donde se llama a usdc.aprove (publicSaleAddress , usdcAmount)
         require(!nftPurchased[_id], "NFT already purchased");
         require(_id >= 0 && _id <= 699, "Invalid NFT ID");
+        require(USDC.allowance(msg.sender, address(this)) >= usdcAmount, "Aprove insufficient");
 
-        uint256 priceInBBTKN = getPriceForId(_id);
 
-        //  msg.sender da approve al contrat PS de usar USDC
-        USDC.approve(address(this), usdcAmount);
+        //dar aprove de los usdc para que el contrato los tranfiera al router
 
         // Transferir USDC al contrato
         USDC.transferFrom(msg.sender, address(this), usdcAmount);
-
+        USDC.approve(routerAddress, usdcAmount);
+        uint256 priceInBBTKN = getPriceForId(_id);
         // Definir la ruta de USDC a BBTKN
         address[] memory path = new address[](2);
-        path[0] = address(USDC); // remplazar por
-        path[1] = address(BBTKN); // USDC0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95
+        path[0] = address(USDC); //
+        path[1] = address(BBTKN); //
 
-        uint256 deadline = block.timestamp + 300; //  5 minutos para la transacción
+        uint256 deadline = block.timestamp + 3000; //  5 minutos para la transacción
 
-        //darle aprovve al router
-
-        USDC.approve(routerAddress, usdcAmount);
-
+    
         // Intercambiar USDC por BBTKN
-        uint[] memory amounts = router.swapTokensForExactTokens(
+        uint256[] memory amounts = router.swapTokensForExactTokens(
             priceInBBTKN,
             usdcAmount,
             path,
-            msg.sender,
+            address(this),
             deadline
         );
 
@@ -181,7 +183,6 @@ contract PublicSale is
         require(!nftPurchased[_id] && _id >= 700 && _id < 1000, "invalid ID");
         nftPurchased[_id] = true;
 
-        // Implementación pendiente
         emit PurchaseNftWithId(msg.sender, _id);
         if (msg.value > priceInEther) {
             payable(msg.sender).transfer(msg.value - priceInEther);
@@ -244,7 +245,7 @@ contract PublicSale is
     }
 
     function version() public pure returns (uint256) {
-        return 1;
+        return 4;
     }
 
     function withdrawEther() public onlyRole(DEFAULT_ADMIN_ROLE) {
