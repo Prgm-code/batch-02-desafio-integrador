@@ -14,14 +14,33 @@ const {
 
 const { getRootFromMT } = require("../utils/merkleTree");
 
-var MINTER_ROLE = getRole("MINTER_ROLE");
+
+var MINTER_ROLE = "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
 var BURNER_ROLE = getRole("BURNER_ROLE");
 
 // Publicar NFT en Mumbai
 async function deployMumbai() {
-  var relAddMumbai; // relayer mumbai
-  var name = "Chose a name";
-  var symbol = "Chose a symbol";
+  const root = getRootFromMT();
+  var relAddMumbai= "0x89709B96d95194FE305FF249883f77Ce0C679BdA"; // relayer mumbai
+  var name = "CuyCollection";
+  var symbol = "CCNFT";
+
+  const CUYNFT = await deploySCNoUp("CuyCollectionNft", [name, symbol]);
+  const CUYNFTAdd = await CUYNFT.getAddress();
+  console.log("CUYNFT", CUYNFTAdd);
+  
+  console.log ("asignando el rol de minter al relayer")
+ const res = await  ex(CUYNFT, "grantRole", [MINTER_ROLE, relAddMumbai], "Error al asignar el rol de minter");
+ console.log("res", res.hash);
+
+ const res2 = await  ex(CUYNFT, "setMerkleRoot", [root], "Errro al establecer el root");
+ console.log("establecinedo ROOT " + root );
+  console.log("res2", res2.hash);
+
+
+  await verify(CUYNFTAdd, "CUYNFT", [name, symbol])
+
+
 
   // utiliza deploySC
   // utiliza printAddress
@@ -29,12 +48,12 @@ async function deployMumbai() {
   // utiliza ex
   // utiliza verify
 
-  await verify(implAdd, "CUYNFT");
+ 
 }
 
 // Publicar UDSC, Public Sale y Bbites Token en Goerli
 async function deployGoerli() {
-  var relAddGoerli; // relayer goerli para asignarle el rol de minter y burner lcon al funcion ex
+  var relAddGoerli ="0x21cb1753289b7A29EF38e63E6daA7d9c59dF584d"; // relayer goerli para asignarle el rol de minter y burner lcon al funcion ex
   const routerAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";  // Dirección del router Uniswap V2 
   const factoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";  // Dirección del factory Uniswap V2 
   const [deployer] = await hre.ethers.getSigners();
@@ -44,6 +63,8 @@ async function deployGoerli() {
   const BBitesToken = await deploySC("BBitesToken", []);
   const BBTKNProxyAddress = await BBitesToken.getAddress();
   const BBTKNimplAdd = await printAddress("BBitesToken", await BBitesToken.getAddress());
+  const resGrantRole = await ex(BBitesToken, "grantRole", [MINTER_ROLE, relAddGoerli], "Error al asignar el rol de minter");
+  console.log("Asignando Rol minter a Relayer", resGrantRole.hash);
   await verify(BBTKNimplAdd, "BBitesToken");
   // deploySC ;
   const USDC = await deploySCNoUp("USDCoin", []);
@@ -89,9 +110,9 @@ async function deployGoerli() {
 
 async function addLiquidity() {
   const [deployer] = await hre.ethers.getSigners();
-  const BBTKNProxyAddress = "0x329778a4DD06b05287514dC1142765FcBb73059D"; // Dirección del proxy del BBTKN
-  const USDCAddress = "0xE21faA53986d54c280392DecC2550c415d6EE439";
-  const liquidityProviderAddress = "0xd1CF0335ee7539f6A210E44A2C37784136A5fD50"
+  const BBTKNProxyAddress = "0x9bCe072437F38979894e8e89690A3CC13405832c"; // Dirección del proxy del BBTKN
+  const USDCAddress = "0xFc01F25A87C4dDcF8B6c12fb5Ce44B75Cc56CB82";
+  const liquidityProviderAddress = "0x55671493844AC3D2A9C5849f7dad9236C9BE3d86"
   const amountADesired = pEth("1000000");  // Cantidad deseada para el BBTKN
   const amountBDesired = 500000 * (10 ** 6);  // Cantidad deseada para el USDC
   const amountAMin = pEth("1000000"); // 1.000.000 
@@ -161,8 +182,8 @@ async function addLiquidity() {
 }
 
 async function deployPublicSale() {
-  const _BBTKNAddress = "0x329778a4DD06b05287514dC1142765FcBb73059D"; // Dirección del BBTKN
-  const _USDCAddress = "0xE21faA53986d54c280392DecC2550c415d6EE439"; // Dirección del USDC
+  const _BBTKNAddress = "0x9bCe072437F38979894e8e89690A3CC13405832c"; // Dirección del BBTKN
+  const _USDCAddress = "0xFc01F25A87C4dDcF8B6c12fb5Ce44B75Cc56CB82"; // Dirección del USDC
   
 
   const [deployer] = await hre.ethers.getSigners();
@@ -170,6 +191,7 @@ async function deployPublicSale() {
      _BBTKNAddress,
     _USDCAddress,
    ]);
+
    const publicSaleProxyAddress = await PublicSale.getAddress();
    console.log("PublicSaleproxy deployed to:", publicSaleProxyAddress);
    const publicSaleImpAddress = await printAddress("PublicSale", publicSaleProxyAddress); 
@@ -178,11 +200,13 @@ async function deployPublicSale() {
   
 }
 
-// deployMumbai()
- // deployGoerli()
- //addLiquidity()
-   deployPublicSale()
+ //deployMumbai()
+  //deployGoerli()
+//  addLiquidity()
+  deployPublicSale()
+  
   .catch((error) => {
     console.error(error);
     process.exitCode = 1;
   });
+

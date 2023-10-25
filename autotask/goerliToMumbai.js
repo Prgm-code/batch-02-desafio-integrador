@@ -14,17 +14,15 @@ exports.handler = async function (data) {
   if (onlyEvents.length === 0) return;
 
   // Filtrando solo MintInAnotherChain
-  var event = onlyEvents.filter((ev) =>
-    ev.signature.includes("PurchaseNftWithId")
-  );
+  var event = onlyEvents.filter((ev) => ev.signature.includes("PurchaseNftWithId"));
   // Mismos params que en el evento
   var { account, id } = event[0].params;
 
   // Ejecutar 'mint' en Mumbai del contrato MiPrimerToken
-  var miPrimerTokenAdd = "0x4A16D22ae3A53E30ef0519F845511A990B0300B8";
-  var tokenAbi = ["function mint(address to, uint256 amount)"];
-  var tokenContract = new ethers.Contract(miPrimerTokenAdd, tokenAbi, signer);
-  var tx = await tokenContract.mint(account, tokens);
+  var CuyCollectionNft = "0x3ce520AE7BBA03a5C9Ff2B6251B4f50054672424";
+  var tokenAbi = ["function safeMint(address to, uint256 tokenId)"];
+  var tokenContract = new ethers.Contract(CuyCollectionNft, tokenAbi, signer);
+  var tx = await tokenContract.safeMint(account, id);
   var res = await tx.wait();
   return res;
 
