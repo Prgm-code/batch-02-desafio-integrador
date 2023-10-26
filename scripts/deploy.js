@@ -1,7 +1,7 @@
 require("dotenv").config();
 const { ethers } = require("hardhat");
 const pEth = ethers.parseEther;
-
+const { addresses, updateAddress } = require("../utils/addresses");
 
 const {
   getRole,
@@ -15,47 +15,44 @@ const {
 const { getRootFromMT } = require("../utils/merkleTree");
 
 
-var MINTER_ROLE = "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
+var MINTER_ROLE = getRole("MINTER_ROLE");
 var BURNER_ROLE = getRole("BURNER_ROLE");
+
+
+
 
 // Publicar NFT en Mumbai
 async function deployMumbai() {
   const root = getRootFromMT();
-  var relAddMumbai= "0x89709B96d95194FE305FF249883f77Ce0C679BdA"; // relayer mumbai
+  var relAddMumbai = addresses.MUMBAI_RELAY_ADDRESS; // relayer mumbai
   var name = "CuyCollection";
   var symbol = "CCNFT";
 
   const CUYNFT = await deploySCNoUp("CuyCollectionNft", [name, symbol]);
   const CUYNFTAdd = await CUYNFT.getAddress();
   console.log("CUYNFT", CUYNFTAdd);
-  
-  console.log ("asignando el rol de minter al relayer")
- const res = await  ex(CUYNFT, "grantRole", [MINTER_ROLE, relAddMumbai], "Error al asignar el rol de minter");
- console.log("res", res.hash);
 
- const res2 = await  ex(CUYNFT, "setMerkleRoot", [root], "Errro al establecer el root");
- console.log("establecinedo ROOT " + root );
-  console.log("res2", res2.hash);
+  console.log("asignando el rol de minter al relayer")
+  const res = await ex(CUYNFT, "grantRole", [MINTER_ROLE, relAddMumbai], "Error al asignar el rol de minter");
+  console.log("TX Asignando Rol de Minter al Relayer. HASH: ", res.hash);
+
+  const res2 = await ex(CUYNFT, "setMerkleRoot", [root], "Errro al establecer el root");
+  console.log("establecinedo ROOT " + root);
+  console.log("TX estableciondo el ROOT del MerkleTree. HASH: ", res2.hash);
 
 
   await verify(CUYNFTAdd, "CUYNFT", [name, symbol])
+  await updateAddress('CCNFT_CONTRACT_ADDRESS', CUYNFTAdd);
 
 
 
-  // utiliza deploySC
-  // utiliza printAddress
-  // utiliza ex
-  // utiliza ex
-  // utiliza verify
-
- 
 }
 
 // Publicar UDSC, Public Sale y Bbites Token en Goerli
 async function deployGoerli() {
-  var relAddGoerli ="0x21cb1753289b7A29EF38e63E6daA7d9c59dF584d"; // relayer goerli para asignarle el rol de minter y burner lcon al funcion ex
-  const routerAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";  // Dirección del router Uniswap V2 
-  const factoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";  // Dirección del factory Uniswap V2 
+  const relAddGoerli = addresses.GOERLI_RELAY_ADDRESS; // relayer goerli para asignarle el rol de minter y burner lcon al funcion ex
+  const routerAddress = addresses.UNISWAP_ROUTER_ADDRESS;  // Dirección del router Uniswap V2 
+  const factoryAddress = addresses.UNISWAP_FACTORY_ADDRESS; // Dirección del factory Uniswap V2 
   const [deployer] = await hre.ethers.getSigners();
 
 
@@ -66,11 +63,13 @@ async function deployGoerli() {
   const resGrantRole = await ex(BBitesToken, "grantRole", [MINTER_ROLE, relAddGoerli], "Error al asignar el rol de minter");
   console.log("Asignando Rol minter a Relayer", resGrantRole.hash);
   await verify(BBTKNimplAdd, "BBitesToken");
+  await updateAddress('BBTKN_CONTRACT_ADDRESS', BBTKNProxyAddress);
   // deploySC ;
   const USDC = await deploySCNoUp("USDCoin", []);
   const USDCImplAdd = await USDC.getAddress();
   console.log("USDCoin", USDCImplAdd);
   await verify(USDCImplAdd, "USDCoin");
+  await updateAddress('USDC_CONTRACT_ADDRESS', USDCImplAdd);
 
   // consultar el saldo de la cuenta del deployer
   console.log("Saldo de MSG.sender de USDC", await USDC.balanceOf(deployer.address));
@@ -78,13 +77,6 @@ async function deployGoerli() {
 
 
   // await ex( BBitesToken , "grantRole", [MINTER_ROLE, relAddGoerli], "Error al asignar el rol de minter");
-
-  // deploySC;
-  const tokenAAddress = await BBitesToken.getAddress(); // Dirección del tokenA 
-  const tokenBAddress = await USDC.getAddress();  // Dirección del tokenB 
-  // var usdc Contrato+
-  // publicar c ontrato liquidity
-
 
 
 
@@ -106,13 +98,14 @@ async function deployGoerli() {
       BBTKNProxyAddress,
       USDCImplAdd,
     ]);
+  await updateAddress('LIQUIDITY_PROVIDER_CONTRACT_ADDRESS', liquidityProviderAddress);
 }
 
 async function addLiquidity() {
   const [deployer] = await hre.ethers.getSigners();
-  const BBTKNProxyAddress = "0x9bCe072437F38979894e8e89690A3CC13405832c"; // Dirección del proxy del BBTKN
-  const USDCAddress = "0xFc01F25A87C4dDcF8B6c12fb5Ce44B75Cc56CB82";
-  const liquidityProviderAddress = "0x55671493844AC3D2A9C5849f7dad9236C9BE3d86"
+  const BBTKNProxyAddress = addresses.BBTKN_CONTRACT_ADDRESS; // Dirección del proxy del BBTKN
+  const USDCAddress = addresses.USDC_CONTRACT_ADDRESS; // Dirección del USDC
+  const liquidityProviderAddress = addresses.LIQUIDITY_PROVIDER_CONTRACT_ADDRESS; // Dirección del contrato LiquidityProvider
   const amountADesired = pEth("1000000");  // Cantidad deseada para el BBTKN
   const amountBDesired = 500000 * (10 ** 6);  // Cantidad deseada para el USDC
   const amountAMin = pEth("1000000"); // 1.000.000 
@@ -130,9 +123,9 @@ async function addLiquidity() {
   const liquidityProvider = await LiquidityProvider.attach(liquidityProviderAddress);
 
 
+  //const liquidityProvider = LiquidityProvider.attach(liquidityProviderAddress);
 
   const txBBTKN = await bbitesToken.transfer(liquidityProviderAddress, amountADesired);
-
   const resBBTKN = await txBBTKN.wait();
   console.log("hash tx send BBTKN", resBBTKN.hash);
 
@@ -141,9 +134,8 @@ async function addLiquidity() {
   const resUSDC = await txUSDC.wait();
   console.log("hash Tx send USDC", resUSDC.hash);
 
-  //const liquidityProvider = LiquidityProvider.attach(liquidityProviderAddress);
 
-  // añadiendo liquidez
+
 
 
   console.log("Deploying contracts with the account:", deployer.address);
@@ -172,41 +164,44 @@ async function addLiquidity() {
   console.log("hash tx add liquidity ", res.hash);
   console.log("LiquidityProvider deployed to:", await liquidityProvider.address);
   console.log(`hash: ${res.transactionHash}`);
-  // deploySC;
 
-  // var impPS = await printAddress("PublicSale", await psC.getAddress());
-  // var impBT = await printAddress("BBitesToken", await bbitesToken.getAddress());
-
-  // set up
-  // script para verificacion del contrato
 }
 
 async function deployPublicSale() {
-  const _BBTKNAddress = "0x9bCe072437F38979894e8e89690A3CC13405832c"; // Dirección del BBTKN
-  const _USDCAddress = "0xFc01F25A87C4dDcF8B6c12fb5Ce44B75Cc56CB82"; // Dirección del USDC
-  
+  const _BBTKNAddress = addresses.BBTKN_CONTRACT_ADDRESS; // Dirección del BBTKN
+  const _USDCAddress = addresses.USDC_CONTRACT_ADDRESS; // Dirección del USDC
+
 
   const [deployer] = await hre.ethers.getSigners();
   const PublicSale = await deploySC("PublicSale", [
-     _BBTKNAddress,
+    _BBTKNAddress,
     _USDCAddress,
-   ]);
+  ]);
 
-   const publicSaleProxyAddress = await PublicSale.getAddress();
-   console.log("PublicSaleproxy deployed to:", publicSaleProxyAddress);
-   const publicSaleImpAddress = await printAddress("PublicSale", publicSaleProxyAddress); 
-   console.log("PublicSaleImp deployed to:", publicSaleImpAddress); 
+  const publicSaleProxyAddress = await PublicSale.getAddress();
+  console.log("PublicSaleproxy deployed to:", publicSaleProxyAddress);
+  await updateAddress('PUBS_CONTRACT_ADDRESS', publicSaleProxyAddress);
+  const publicSaleImpAddress = await printAddress("PublicSale", publicSaleProxyAddress);
+  console.log("PublicSaleImp deployed to:", publicSaleImpAddress);
   await verify(publicSaleImpAddress, "PublicSale");
-  
+
 }
 
- //deployMumbai()
-  //deployGoerli()
-//  addLiquidity()
-  deployPublicSale()
-  
-  .catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-  });
+async function deploy() {
+//  await deployMumbai()
+  await deployGoerli()
+  await addLiquidity()
+  await deployPublicSale()
+}
+
+deploy().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+}).finally(() => {
+// conssole . log de verificar los contratos proxy 
+console.log("Verificar los contratos proxy BBTKN ", addresses.BBTKN_CONTRACT_ADDRESS);
+console.log("Verificar los contratos proxy PublicSale ", addresses.PUBS_CONTRACT_ADDRESS);
+console.log("Verificar los contratos proxy CuyCollection ", addresses.CCNFT_CONTRACT_ADDRESS);
+
+});
 
