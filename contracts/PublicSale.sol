@@ -12,15 +12,13 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {IUniSwapV2Router02} from "./Interfaces.sol";
 
+/// @custom:security-contact patricio@prgmdev.com
 contract PublicSale is
     Initializable,
     PausableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
-    /*     address _BBTKNAddress =  0x2Ddd80BF329A5bC0fF11707d2A579A70d740ae95;
-    address USDCAddress; */
-
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant EXECUTER_ROLE = keccak256("EXECUTER_ROLE");
@@ -36,6 +34,7 @@ contract PublicSale is
     IERC20 BBTKN;
     IERC20 USDC;
     address routerAddress;
+    address factoryAddress;
     IUniSwapV2Router02 router;
 
     mapping(uint256 => bool) public nftPurchased;
@@ -47,7 +46,9 @@ contract PublicSale is
 
     function initialize(
         address _BBTKNaddress,
-        address _USDCaddress
+        address _USDCaddress,
+        address _routerAddress,
+        address _factoryAddress
     ) public initializer {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
@@ -55,8 +56,9 @@ contract PublicSale is
 
         BBTKN = IERC20(_BBTKNaddress);
         USDC = IERC20(_USDCaddress);
-        routerAddress = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-        router = IUniSwapV2Router02(routerAddress);
+        routerAddress = _routerAddress;
+        factoryAddress = _factoryAddress;
+        router = IUniSwapV2Router02(_routerAddress);
     }
 
     function purchaseWithTokens(uint256 _id) public whenNotPaused {
@@ -68,14 +70,10 @@ contract PublicSale is
             BBTKN.balanceOf(msg.sender) >= price,
             "Insufficient BBTKN tokens"
         );
-        //dar aprove al contrato para que pueda usar los tokens del usuario
 
         BBTKN.approve(address(this), price); //revisar el aprove que debe reALIZAErce desde BBTKN
-
         BBTKN.transferFrom(msg.sender, address(this), price);
-
         nftPurchased[_id] = true;
-
         emit PurchaseNftWithId(msg.sender, _id);
     }
 
@@ -83,14 +81,13 @@ contract PublicSale is
         uint256 usdcAmount,
         uint256 _id
     ) public whenNotPaused {
-
         // el aprove se realiza desde el front end donde se llama a usdc.aprove (publicSaleAddress , usdcAmount)
         require(!nftPurchased[_id], "NFT already purchased");
         require(_id >= 0 && _id <= 699, "Invalid NFT ID");
-        require(USDC.allowance(msg.sender, address(this)) >= usdcAmount, "Aprove insufficient");
-
-
-        //dar aprove de los usdc para que el contrato los tranfiera al router
+        require(
+            USDC.allowance(msg.sender, address(this)) >= usdcAmount,
+            "Aprove insufficient"
+        );
 
         // Transferir USDC al contrato
         USDC.transferFrom(msg.sender, address(this), usdcAmount);
@@ -100,10 +97,8 @@ contract PublicSale is
         address[] memory path = new address[](2);
         path[0] = address(USDC); //
         path[1] = address(BBTKN); //
-
         uint256 deadline = block.timestamp + 3000; //  5 minutos para la transacción
 
-    
         // Intercambiar USDC por BBTKN
         uint256[] memory amounts = router.swapTokensForExactTokens(
             priceInBBTKN,
@@ -117,65 +112,32 @@ contract PublicSale is
         if (usdcAmount > amounts[0]) {
             USDC.transfer(msg.sender, usdcAmount - amounts[0]);
         }
-
         nftPurchased[_id] = true;
         emit PurchaseNftWithId(msg.sender, _id);
     }
 
-    /*     function purchaseWithUSDC(uint256 usdcAmount , uint256 _id) external {
-        require(!nftPurchased[_id], "NFT already purchased");
-        require(_id >= 0 && _id <= 699, "Invalid NFT ID");
-        
-        // Lee llamaala metodo comparr con USDC 
-        // Lee tiene que dar un aprove al public sale opara que maneje sus usdc
-        //este aprove se llama desde el contrato USDC 
-
-        //una ves que se ha dado el aproove se puede llamar a trasnfer_From
-        // USDC.transferFrom(msg.sender, address(this), price);
-        // internamente, en transferFrom el msg.sender == PublicSale Sc , que es el spender 
-
-        // el SC PublicSale tiene un  sldo en usdc, en usdcAmount
-
-        // antes de llamar al router, el SC PublicSale tiene que darle allowance router 
-        // como publicsale le da allowande al conrtato router 
-
-        // usdc.apove (ruteraddress ,usdcAmount)
-        // internameinte en el metodo aprove el msg.sender == SC PubvlicSale , que es el dueño de los tokens 
-
-
-        //el SC PublñicSale antes de llamar al router debe poseer un balance en USDC (en la canbtidad de UsdcAmoun)
-
-        // llla ma al riuter con router.swapTokensForExactTokens(amountOut, amountInMax, path, to, deadline);
-        //el router sustrae los usdc  desde public salñe a cambio de lo s BBtokens que son entregado s l sc Pubicsale
-        // uint [ ] amount= router.swapTokensForExactTokens(amountOut, amountInMax, path, to, deadline);
-        // uint[0] = cantidad de Usdc realmente utilizados 
-        // if ( usdcAmopunt > amount[0] ){
-            //usdc.transfer(msg.sender , usdcAmount - amount[0]);
-            // en este caso los 
-
-        }
-        //finalemente emite el ev3ento de lla compra con usdc para que sea cpturado con el sentinel
-    } */
-
-    /*     function _swapExactTokensForTokens(
+    function getAmountIn(
         uint amountOut,
-        uint amountInMax,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) internal   {
-        address origenToken = path[0];
-        IERC20(origenToken).approve(routerAddress, amountInMax);
+        uint reserveIn,
+        uint reserveOut
+    ) public returns (uint amountIn) {
+        return router.getAmountIn(amountOut, reserveIn, reserveOut);
+    }
 
-        uint[] memory _amounts = router.swapTokensForExactTokens(
+    function getAmountsIn(uint amountOut) public view returns (uint amountIn) {
+        address[] memory path = new address[](2);
+        path[0] = address(USDC);
+        path[1] = address(BBTKN);
+
+        // Obtener cantidades estimadas de entrada
+        uint[] memory amounts = router.getAmountsIn(
+            factoryAddress,
             amountOut,
-            amountInMax,
-            path,
-            to,
-            deadline
+            path
         );
-    
-    } */
+
+        return amounts[0]; // Devuelve la cantidad estimada de USDC necesaria
+    }
 
     function purchaseWithEtherAndId(uint256 _id) public payable {
         uint256 priceInEther = 0.01 ether;
@@ -245,7 +207,7 @@ contract PublicSale is
     }
 
     function version() public pure returns (uint256) {
-        return 4;
+        return 1;
     }
 
     function withdrawEther() public onlyRole(DEFAULT_ADMIN_ROLE) {

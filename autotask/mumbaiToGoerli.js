@@ -18,7 +18,7 @@ exports.handler = async function (data) {
   const { account, id } = event[0].params;
 
   //Ejecutar el mint de BBTKN en Goerli
-  const BBTKN = "0x9bCe072437F38979894e8e89690A3CC13405832c";
+  const BBTKN = "0x82C18793996cB5f4B1566977fC92eA1A1BEBc653";
   const amount = ethers.utils.parseUnits('10000', 18);
   const tokenAbi = ["function mint(address to, uint256 amount)"];
   const tokenContract = new ethers.Contract(BBTKN, tokenAbi, signer);

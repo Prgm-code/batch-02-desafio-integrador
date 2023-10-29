@@ -3,26 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-interface IUniswapV2Pair {
-    function DOMAIN_SEPARATOR() external view returns (bytes32);
-    function MINIMUM_LIQUIDITY() external pure returns (uint);
-    function PERMIT_TYPEHASH() external pure returns (bytes32);
-    function allowance(address owner, address spender) external view returns (uint);
-    function balanceOf(address owner) external view returns (uint);
-    function decimals() external pure returns (uint8);
-    function name() external pure returns (string memory);
-    function symbol() external pure returns (string memory);
-    function totalSupply() external view returns (uint);
-    function factory() external view returns (address);
-    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
-    function kLast() external view returns (uint);
-    function nonces(address owner) external view returns (uint);
-    function price0CumulativeLast() external view returns (uint);
-    function price1CumulativeLast() external view returns (uint);
-    function token0() external view returns (address);
-    function token1() external view returns (address);
-}
-
 interface IUniswapV2Router02 {
     function addLiquidity(
         address tokenA,
@@ -49,6 +29,7 @@ interface IUniswapV2Factory {
     ) external view returns (address pair);
 }
 
+/// @custom:security-contact patricio@prgmdev.com
 contract LiquidityProvider {
     address public routerAddress;
     IUniswapV2Router02 public router;
@@ -105,10 +86,10 @@ contract LiquidityProvider {
 
         emit LiquidityAdded(amountA, amountB, amountLP);
     }
-    
 
     function getPair() public view returns (address) {
         return factory.getPair(address(tokenA), address(tokenB));
     }
-}
 
+
+}

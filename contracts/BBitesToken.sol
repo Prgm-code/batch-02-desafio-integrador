@@ -11,7 +11,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 //import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
-/// @custom:security-contact lee.marreros@blockchainbites.co
+/// @custom:security-contact patricio@prgmdev.com
 contract BBitesToken is
     Initializable,
     ERC20Upgradeable,

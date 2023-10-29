@@ -11,4 +11,16 @@ interface IUniSwapV2Router02 {
         address to,
         uint deadline
     ) external returns (uint[] memory amounts);
+
+    function getAmountIn(
+        uint amountOut,
+        uint reserveIn,
+        uint reserveOut
+    ) external returns (uint amountIn);
+
+    function getAmountsIn(
+        address factory,
+        uint amountOut,
+        address[] memory path
+    ) external view returns (uint[] memory amounts);
 }
