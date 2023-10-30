@@ -1,5 +1,6 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = {
   devtool: "eval-source-map",
@@ -14,7 +15,15 @@ module.exports = {
       title: "Interacting with smart contract",
       template: "index.html",
     }),
+    new webpack.IgnorePlugin({ resourceRegExp: /^fs$/, contextRegExp: /./ }),
+    new webpack.IgnorePlugin({ resourceRegExp: /^path$/, contextRegExp: /./ }),
   ],
+  resolve: {
+    fallback: {
+      fs: false,
+      path: false,
+    },
+  },
   output: {
     filename: "[name].bundle.js",
     clean: true,

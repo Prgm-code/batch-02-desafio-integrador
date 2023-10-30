@@ -179,9 +179,12 @@ async function deployPublicSale() {
 }
 
 async function deploy() {
-  //await deployMumbai()
+  // await deployMumbai()
+  //
   await deployGoerli()
+  // 
   await addLiquidity()
+  // 
   await deployPublicSale()
 }
 

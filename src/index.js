@@ -1,11 +1,13 @@
-import { Contract, ethers } from "ethers";
-import { getRootFromMT, getProofs } from "../utils/merkleTree";
-import { addresses } from "../utils/addresses";
+const { ethers, Contract } = require("ethers");
+const getRootFromMT = require("../utils/merkleTreeFE").getRootFromMT;
+const getProofs = require("../utils/merkleTreeFE").getProofs;
+const addresses = require("../utils/addresses").addresses;
 
-import usdcTknAbi from "../artifacts/contracts/USDCoin.sol/USDCoin.json";
-import bbitesTokenAbi from "../artifacts/contracts/BBitesToken.sol/BBitesToken.json";
-import publicSaleAbi from "../artifacts/contracts/PublicSale.sol/PublicSale.json";
-import nftTknAbi from "../artifacts/contracts/CuyCollectionNft.sol/CuyCollectionNft.json";
+const usdcTknAbi = require("../artifacts/contracts/USDCoin.sol/USDCoin.json").abi;
+const bbitesTokenAbi = require("../artifacts/contracts/BBitesToken.sol/BBitesToken.json").abi;
+const publicSaleAbi = require("../artifacts/contracts/PublicSale.sol/PublicSale.json").abi;
+const nftTknAbi = require("../artifacts/contracts/CuyCollectionNft.sol/CuyCollectionNft.json").abi;
+
 
 // import publicSaleAbi
 // import nftTknAbi
@@ -32,7 +34,6 @@ import nftTknAbi from "../artifacts/contracts/CuyCollectionNft.sol/CuyCollection
 //   });
 // }
 
-var merkleTree;
 var provider, signer, account;
 var usdcTkContract, bbitesTknContract, pubSContract, nftContract;
 var usdcAddress, bbitesTknAdd, pubSContractAdd;
@@ -42,22 +43,22 @@ function initSCsGoerli() {
 
   usdcAddress = addresses.USDC_CONTRACT_ADDRESS;
   bbitesTknAdd = addresses.BBTKN_CONTRACT_ADDRESS;
-  pubSContractAdd = addresses.PUBLIC_SALE_CONTRACT_ADDRESS;
+  pubSContractAdd = addresses.PUBS_CONTRACT_ADDRESS;
 
   usdcTkContract = new Contract(usdcAddress, usdcTknAbi, provider); // = new Contract(...
   bbitesTknContract = new Contract(bbitesTknAdd, bbitesTokenAbi, provider); // = new Contract(...
   pubSContract = new Contract(pubSContractAdd, publicSaleAbi, provider); // = new Contract(...
 }
 
-function initSCsMumbai() {
+async function initSCsMumbai() {
   provider = new ethers.BrowserProvider(window.ethereum);
 
-  var nftAddress = addresses.NFT_CONTRACT_ADDRESS;
+  var nftAddress = addresses.CCNFT_CONTRACT_ADDRESS;
 
   nftContract = new Contract(nftAddress, nftTknAbi, provider); // = new Contract(...
 }
 
-function setUpListeners() {
+async function setUpListeners() {
   // Connect to Metamask
   var bttn = document.getElementById("connect");
   var walletIdEl = document.getElementById("walletId");
@@ -73,96 +74,268 @@ function setUpListeners() {
   });
 
   // USDC Balance - balanceOf
-  var bttn = document.getElementById("usdcUpdate");
-  bttn.addEventListener("click", async function () {
-    var balance = await usdcTkContract.balanceOf(account);
-    var balanceEl = document.getElementById("usdcBalance");
-    balanceEl.innerHTML = ethers.formatUnits(balance, 6);
+  const usdcUpdate = document.getElementById("usdcUpdate");
+  const balanceElusdc = document.getElementById("usdcBalance");
+  usdcUpdate.addEventListener("click", async function () {
+    try {
+      var balance = await bbitesTknContract.balanceOf(account);
+      balanceElusdc.innerHTML = ethers.formatUnits(balance, 18);
+    } catch (error) {
+      console.log(error);
+    }
   });
 
   // Bbites token Balance - balanceOf
-  var bbitesBtn = document.getElementById("bbitesUpdate");
-  bbitesBtn.addEventListener("click", async function () {
-    var balance = await bbitesTknContract.balanceOf(account);
-    var balanceEl = document.getElementById("bbitesBalance");
-    balanceEl.innerHTML = ethers.formatUnits(balance, 18);
+  var bbitesTknUpdate = document.getElementById("bbitesTknUpdate");
+  var bbitesTknBalance = document.getElementById("bbitesTknBalance");
+  bbitesTknUpdate.addEventListener("click", async function () {
+    try {
+      var balance = await bbitesTknContract.balanceOf(account);
+      bbitesTknBalance.innerHTML = ethers.formatUnits(balance, 18);
+    } catch (error) {
+      console.log(error);
+    }
   });
   // APPROVE BBTKN
   const approveBbitesBtn = document.getElementById("approveButtonBBTkn");
+  const approveInput = document.getElementById("approveInput");
+  const approveError = document.getElementById("approveError");
+  const approveSuccess = document.getElementById("approveSuccess");
   approveBbitesBtn.addEventListener("click", async function () {
-    let amount = approveBbitesBtn.value;
-    await bbitesTknContract.approve(pubSContractAdd, amount);
+    try {
+
+      let amount = approveInput.value;
+      let tx = await bbitesTknContract
+        .connect(signer)
+        .approve(pubSContractAdd, amount);
+      let response = await tx.wait();
+      console.log(response.hash);
+      approveSuccess.innerHTML = `Transaccion exitosa con hash ${response.hash}`
+    } catch (error) {
+      approveError.innerHTML = `Error en la transaccion ${error.message}`;
+      console.log(error);
+    }
+
+
   });
 
   // APPROVE USDC
   // usdcTkContract.approve
   const approveUsdcBtn = document.getElementById("approveButtonUSDC");
+  const approveInputUSDC = document.getElementById("approveInputUSDC");
+  const approveSuccessUSDC = document.getElementById("approveSuccessUSDC");
   approveUsdcBtn.addEventListener("click", async function () {
-    let amount =approveUsdcBtn.value;
-    await usdcTkContract.approve(pubSContractAdd, amount);
+    try {
+      let amount = approveInputUSDC.value;
+      let tx = await usdcTkContract
+        .connect(signer)
+        .approve(pubSContractAdd, amount);
+      let response = await tx.wait();
+      console.log(response.hash);
+      approveSuccessUSDC.innerHTML = `Transaccion exitosa con hash ${response.hash}`
+    } catch (error) {
+      let approveErrorUSDC = document.getElementById("approveErrorUSDC");
+      approveErrorUSDC.innerHTML = error.message;
+    }
   });
 
   // purchaseWithTokens
-  var bttn = document.getElementById("purchaseButton");
+  const purchaseButton = document.getElementById("purchaseButton");
+  const purchaseInput = document.getElementById("purchaseInput");
+  const purchaseSuccess = document.getElementById("purchaseSuccess");
+  const purchaseError = document.getElementById("purchaseError");
+  purchaseButton.addEventListener("click", async function () {
+    try {
+      let amount = purchaseInput.value;
+      let tx = await pubSContract
+        .connect(signer)
+        .purchaseWithTokens(amount);;
+      let response = await tx.wait();
+      console.log(response.hash);
+      purchaseSuccess.innerHTML = `Transaccion exitosa con hash ${response.hash}`
+    } catch (error) {
+      console.log(error);
+      purchaseError.innerHTML = `Error en la transaccion ${error.message}`;
+    }
+  });
+
+
 
   // purchaseWithUSDC
-  var bttn = document.getElementById("purchaseButtonUSDC");
+  const purchaseButtonUSDC = document.getElementById("purchaseButtonUSDC");
+  const purchaseInputUSDC = document.getElementById("purchaseInputUSDC");
+  const amountInUSDCInput = document.getElementById("amountInUSDCInput");
+  const purchaseSuccessUSDC = document.getElementById("purchaseSuccessUSDC");
+  const purchaseErrorUSDC = document.getElementById("purchaseErrorUSDC");
+  purchaseButtonUSDC.addEventListener("click", async function () {
+    try {
+      let id = purchaseInputUSDC.value;
+      let amount = amountInUSDCInput.value;
+      let tx = await pubSContract
+        .connect(signer)
+        .purchaseWithUSDC(id, amount);
+      let response = await tx.wait();
+      console.log(response.hash);
+      purchaseSuccessUSDC.innerHTML = `Transaccion exitosa con hash ${response.hash}`
+    } catch (error) {
+      console.log(error);
+      purchaseErrorUSDC.innerHTML = `Error en la transaccion ${error.message}`;
+    }
+
+  });
+
 
   // purchaseWithEtherAndId
-  var bttn = document.getElementById("purchaseButtonEtherId");
+  const purchaseButtonEtherId = document.getElementById("purchaseButtonEtherId");
+  const purchaseInputEtherId = document.getElementById("purchaseInputEtherId");
+  const purchaseSuccessEtherId = document.getElementById("purchaseSuccessEtherId");
+  const purchaseEtherIdError = document.getElementById("purchaseEtherIdError");
+
+  purchaseButtonEtherId.addEventListener("click", async function () {
+    try {
+      let idx = purchaseInputEtherId.value
+      if (idx < 700 || idx >= 1000) throw new Error("Invalid ID");
+      let id = parseInt(purchaseInputEtherId.value, 10);
+      const priceInEther = ethers.parseEther("0.01"); // 0.01 Ether
+
+
+      let tx = await pubSContract
+        .connect(signer)
+        .purchaseWithEtherAndId(id, { value: priceInEther });
+      let res = await tx.wait();
+      console.log(res.hash);
+      purchaseSuccessEtherId.innerHTML = `Transaccion exitosa con hash ${res.hash}`
+    } catch (error) {
+      console.log(error);
+      purchaseEtherIdError.innerHTML = `Error en la transaccion ${error.message}`
+    }
+  })
+
 
   // send Ether
-  var bttn = document.getElementById("sendEtherButton");
+  const sendEtherButton = document.getElementById("sendEtherButton");
+  const sendEtherSuccess = document.getElementById("sendEtherSuccess");
+  const sendEtherInput = ethers.parseEther("0.01"); // 0.01 Ether
+  sendEtherButton.addEventListener("click", async function () {
+    try {
+      const amount = sendEtherInput;
+      const tx = await pubSContract
+        .connect(signer)
+        .depositEthForARandomNft({ value: amount });
+      const response = await tx.wait();
+      console.log("Transacción confirmada:", response.transactionHash);
+      sendEtherSuccess.innerHTML = `Transaccion exitosa con hash ${response.hash}`
+    } catch (error) {
+      const sendEtherError = document.getElementById("sendEtherError");
+      sendEtherError.innerHTML = error.message;
+      console.error("Error al enviar Ether:", error.message);
+    }
+
+  })
 
   // getPriceForId
-  var bttn = document.getElementById("getPriceNftByIdBttn");
+  const getPriceNftByIdBttn = document.getElementById("getPriceNftByIdBttn");
+  const priceNftIdInput = document.getElementById("priceNftIdInput");
+  const priceNftByIdText = document.getElementById("priceNftByIdText");
+  const getPriceNftError = document.getElementById("getPriceNftError");
+  getPriceNftByIdBttn.addEventListener("click", async function () {
+    try {
+      let id = priceNftIdInput.value;
+      let price = await pubSContract.getPriceForId(id);
+      priceNftByIdText.innerHTML = price.toString();
+    } catch (error) {
+      getPriceNftError.innerHTML = error.message;
+      console.log(error);
+    }
+  })
+
+
 
   // getProofs
-  var bttn = document.getElementById("getProofsButtonId");
-  bttn.addEventListener("click", async () => {
-    var id;
-    var address;
+  const getProofsButtonId = document.getElementById("getProofsButtonId");
+  const showProofsTextId = document.getElementById("showProofsTextId");
+  const inputIdProofId = document.getElementById("inputIdProofId");
+  const inputAccountProofId = document.getElementById("inputAccountProofId");
+  getProofsButtonId.addEventListener("click", async () => {
+    let id = inputIdProofId.value;
+    let address = inputAccountProofId.value;
     var proofs = getProofs(id, address);
     navigator.clipboard.writeText(JSON.stringify(proofs));
+    showProofsTextId.innerHTML = JSON.stringify(proofs);
   });
 
   // safeMintWhiteList
-  var bttn = document.getElementById("safeMintWhiteListBttnId");
+  const safeMintWhiteListBttnId = document.getElementById("safeMintWhiteListBttnId");
+  const whiteListToInputId = document.getElementById("whiteListToInputId");
+  const whiteListToInputTokenId = document.getElementById("whiteListToInputTokenId");
+  const whiteListToInputProofsId = document.getElementById("whiteListToInputProofsId");
+  const whiteListErrorId = document.getElementById("whiteListErrorId");
+  const safeMintWhiteListSuccessId = document.getElementById("safeMintWhiteListSuccessId");
+  safeMintWhiteListBttnId.addEventListener("click", async () => {
+
+    try {
+      let proofs = whiteListToInputProofsId.value;
+      let proofsBytes = JSON.parse(proofs).map(ethers.hexlify);
+      let to = signer.address;
+      let tokenId = whiteListToInputTokenId.value;
+      let tx = nftContract
+        .connect(signer)
+        .safeMintWhiteList(to, tokenId, proofsBytes);;
+      let res = await tx.wait();
+      console.log(res.hash);
+      safeMintWhiteListSuccessId.innerHTML = `Transaccion exitosa con hash ${res.hash}`
+    } catch (error) {
+      whiteListErrorId.innerHTML = error.message;
+      console.log(error);
+    }
+  });
+
+
   // usar ethers.hexlify porque es un array de bytes
   // var proofs = document.getElementById("whiteListToInputProofsId").value;
   // proofs = JSON.parse(proofs).map(ethers.hexlify);
 
   // buyBack
-  var bttn = document.getElementById("buyBackBttn");
+  const buyBackBttn = document.getElementById("buyBackBttn");
+  const buyBackInputId = document.getElementById("buyBackInputId");
+  const buyBackErrorId = document.getElementById("buyBackErrorId");
+  const buyBackSuccessId = document.getElementById("buyBackSuccessId");
+  buyBackBttn.addEventListener("click", async () => {
+    try {
+      let tokenId = buyBackInputId.value;
+      let tx = await pubSContract
+        .connect(signer)
+        .buyBack(tokenId);
+      let res = await tx.wait();
+      console.log(res.hash);
+      buyBackSuccessId.innerHTML = `Transaccion exitosa con hash ${res.hash}`
+    } catch (error) {
+      buyBackErrorId.innerHTML = error.message;
+      console.log(error);
+    }
+  });
 }
 
-function setUpEventsContracts() {
+
+async function setUpEventsContracts() {
   var pubSList = document.getElementById("pubSList");
   pubSContract.on("PurchaseNftWithId", (buyer, tokenId, value, event) => {
-    var li = document.createElement("li");
-    li.textContent = `Buyer: ${buyer}, Token ID: ${tokenId.toString()}, Value: ${ethers.formatEther(value)}`;
-    pubSList.appendChild(li);
+   pubSList.innerHTML = `Last Event: Buyer: ${buyer}, Token ID: ${tokenId.toString()}`;
   });
 
   var bbitesListEl = document.getElementById("bbitesTList");
   bbitesTknContract.on("Transfer", (from, to, amount, event) => {
-    var li = document.createElement("li");
-    li.textContent = `From: ${from}, To: ${to}, Amount: ${amount.toString()}`;
-    bbitesListEl.appendChild(li);
+   bbitesListEl.innerHTML = `Last Event: From: ${from}, To: ${to}, Amount: ${amount.toString()}`;
   });
 
   var nftList = document.getElementById("nftList");
   nftContract.on("Transfer", (from, to, tokenId, event) => {
-    var li = document.createElement("li");
-    li.textContent = `From: ${from}, To: ${to}, Token ID: ${tokenId.toString()}`;
-    nftList.appendChild(li);
+    nftList.innerHTML = `Last Event: From: ${from}, To: ${to}, Token ID: ${tokenId.toString()}`;
   });
 
   var burnList = document.getElementById("burnList");
   nftContract.on("Burn", (owner, tokenId, event) => {
-    var li = document.createElement("li");
-    li.textContent = `Owner: ${owner}, Burned Token ID: ${tokenId.toString()}`;
-    burnList.appendChild(li);
+    burnList.innerHTML = `Last Event: Owner: ${owner}, Token ID: ${tokenId.toString()}`;
   });
 }
 
@@ -171,15 +344,15 @@ async function setUp() {
     window.location.reload();
   });
 
-  initSCsGoerli();
+  await initSCsGoerli();
 
-  // initSCsMumbai
+  await initSCsMumbai();
 
-  // setUpListeners
+  await setUpListeners();
 
-  // setUpEventsContracts
+  await setUpEventsContracts();
 
-  // buildMerkleTree
+  //buildMerkleTree();
 }
 
 setUp()
