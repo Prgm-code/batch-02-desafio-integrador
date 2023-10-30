@@ -1,7 +1,8 @@
 require("dotenv").config();
 const { ethers } = require("hardhat");
 const pEth = ethers.parseEther;
-const { addresses, updateAddress } = require("../utils/addresses");
+const { addresses} = require("../utils/addresses");
+const { updateAddress } = require("../utils/setAddresses");
 
 const {
   getRole,
@@ -179,11 +180,9 @@ async function deployPublicSale() {
 }
 
 async function deploy() {
-  // await deployMumbai()
-  //
-  await deployGoerli()
-  // 
-  await addLiquidity()
+   // await deployMumbai()
+  //await deployGoerli()
+  // await addLiquidity()
   // 
   await deployPublicSale()
 }

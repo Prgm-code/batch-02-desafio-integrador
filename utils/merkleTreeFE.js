@@ -26,16 +26,15 @@ const getProofs = (id, address) => {
 
 const getRootFromMT = () => {
   const hashedElements = walletAndIds.map(({ id, address }) => {
-    return hashToken(id, address);
+    return hashToken(String(id), address);
   });
-  console.log(hashedElements);
   
   merkleTree = new MerkleTree(hashedElements, keccak256, {
     sortPairs: true,
   });
   
   root = merkleTree.getHexRoot();
-  console.log(root);
+  console.log("construyendo root merkletree: ",root);
   
   return root;
 };

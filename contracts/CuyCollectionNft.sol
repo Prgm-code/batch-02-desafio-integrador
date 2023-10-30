@@ -61,9 +61,9 @@ contract CuyCollectionNft is
 
     function VerifyMerkleProof(
         bytes32 leaf,
-        bytes32[] memory proof
+        bytes32[] memory _proofs
     ) public view returns (bool) {
-        return MerkleProof.verify(proof, root, leaf);
+        return MerkleProof.verify(_proofs, root, leaf);
     }
 
     function safeMint(
@@ -74,21 +74,22 @@ contract CuyCollectionNft is
         //mintedNft[tokenId][to] = true;
     }
 
+     function _hashearInfo(
+        address to,
+        uint256 tokenId
+    ) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(tokenId, to));
+    }
+
     function safeMintWhiteList(
         address to,
         uint256 tokenId,
-        bytes32[] calldata proofs
+        bytes32[] memory proofs
     ) public {
         //aplicar merkle treee para la lista de billeteras de la 1000 a al 1999
         // Verificar que el tokenId esté en el rango de 1000 a 1999
         require(tokenId >= 1000 && tokenId <= 1999, "TokenId not in range");
-
-        // Construir el leaf a partir del tokenId y la dirección
-        bytes32 leaf = keccak256(abi.encodePacked(tokenId, to));
-
-        // Verificar que la prueba sea válida
-        require(VerifyMerkleProof(leaf, proofs), "Invalid proof");
-
+        require(VerifyMerkleProof(_hashearInfo(to, tokenId), proofs), "Invalid proof");
         safeMint(to, tokenId);
     }
 

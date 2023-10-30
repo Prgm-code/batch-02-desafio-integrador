@@ -207,7 +207,7 @@ contract PublicSale is
     }
 
     function version() public pure returns (uint256) {
-        return 1;
+        return 2;
     }
 
     function withdrawEther() public onlyRole(DEFAULT_ADMIN_ROLE) {

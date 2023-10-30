@@ -1,4 +1,4 @@
-const { ethers, Contract } = require("ethers");
+const { ethers, Contract, parseEther } = require("ethers");
 const getRootFromMT = require("../utils/merkleTreeFE").getRootFromMT;
 const getProofs = require("../utils/merkleTreeFE").getProofs;
 const addresses = require("../utils/addresses").addresses;
@@ -8,31 +8,6 @@ const bbitesTokenAbi = require("../artifacts/contracts/BBitesToken.sol/BBitesTok
 const publicSaleAbi = require("../artifacts/contracts/PublicSale.sol/PublicSale.json").abi;
 const nftTknAbi = require("../artifacts/contracts/CuyCollectionNft.sol/CuyCollectionNft.json").abi;
 
-
-// import publicSaleAbi
-// import nftTknAbi
-
-// SUGERENCIA: vuelve a armar el MerkleTree en frontend
-// Utiliza la libreria buffer
-//import buffer from "buffer/";
-//import walletAndIds from "../wallets/walletList";
-//import { MerkleTree } from "merkletreejs";
-//var Buffer = buffer.Buffer;
-
-/* function hashToken(tokenId, account) {
-  return Buffer.from(
-    ethers
-    .solidityPackedKeccak256(["uint256", "address"], [tokenId, account])
-    .slice(2),
-    "hex"
-    );
-  } */
-// function buildMerkleTree() {
-//   var elementosHasheados;
-//   merkleTree = new MerkleTree(elementosHasheados, ethers.keccak256, {
-//     sortPairs: true,
-//   });
-// }
 
 var provider, signer, account;
 var usdcTkContract, bbitesTknContract, pubSContract, nftContract;
@@ -169,11 +144,12 @@ async function setUpListeners() {
   const purchaseErrorUSDC = document.getElementById("purchaseErrorUSDC");
   purchaseButtonUSDC.addEventListener("click", async function () {
     try {
-      let id = purchaseInputUSDC.value;
+      let id = parseInt(purchaseInputUSDC.value, 10);
+      console.log(id);
       let amount = amountInUSDCInput.value;
       let tx = await pubSContract
         .connect(signer)
-        .purchaseWithUSDC(id, amount);
+        .purchaseWithUSDC(amount, id);
       let response = await tx.wait();
       console.log(response.hash);
       purchaseSuccessUSDC.innerHTML = `Transaccion exitosa con hash ${response.hash}`
@@ -256,11 +232,13 @@ async function setUpListeners() {
   const showProofsTextId = document.getElementById("showProofsTextId");
   const inputIdProofId = document.getElementById("inputIdProofId");
   const inputAccountProofId = document.getElementById("inputAccountProofId");
+  const whiteListToInputProofsId = document.getElementById("whiteListToInputProofsId");
   getProofsButtonId.addEventListener("click", async () => {
     let id = inputIdProofId.value;
     let address = inputAccountProofId.value;
     var proofs = getProofs(id, address);
-    navigator.clipboard.writeText(JSON.stringify(proofs));
+   // navigator.clipboard.writeText(JSON.stringify(proofs));
+   whiteListToInputProofsId.value = JSON.stringify(proofs);
     showProofsTextId.innerHTML = JSON.stringify(proofs);
   });
 
@@ -268,19 +246,24 @@ async function setUpListeners() {
   const safeMintWhiteListBttnId = document.getElementById("safeMintWhiteListBttnId");
   const whiteListToInputId = document.getElementById("whiteListToInputId");
   const whiteListToInputTokenId = document.getElementById("whiteListToInputTokenId");
-  const whiteListToInputProofsId = document.getElementById("whiteListToInputProofsId");
   const whiteListErrorId = document.getElementById("whiteListErrorId");
   const safeMintWhiteListSuccessId = document.getElementById("safeMintWhiteListSuccessId");
   safeMintWhiteListBttnId.addEventListener("click", async () => {
 
     try {
       let proofs = whiteListToInputProofsId.value;
-      let proofsBytes = JSON.parse(proofs).map(ethers.hexlify);
-      let to = signer.address;
-      let tokenId = whiteListToInputTokenId.value;
-      let tx = nftContract
+      let proofsArray = JSON.parse(proofs).map(ethers.hexlify);
+      console.log("Proofs:", proofsArray);
+      
+      let to = whiteListToInputId.value;
+      console.log("To:", to);
+  
+      let tokenId = parseInt(whiteListToInputTokenId.value, 10); 
+      console.log("Token ID:", tokenId);
+  
+      let tx = await nftContract
         .connect(signer)
-        .safeMintWhiteList(to, tokenId, proofsBytes);;
+        .safeMintWhiteList(to, tokenId, proofsArray);
       let res = await tx.wait();
       console.log(res.hash);
       safeMintWhiteListSuccessId.innerHTML = `Transaccion exitosa con hash ${res.hash}`
