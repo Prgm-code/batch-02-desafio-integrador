@@ -14,9 +14,9 @@ function hashToken(tokenId, account) {
 }
 
 var hasheandoElementos, pruebas;
-function getProofs(id, address) {
-  // var id = 1002;
-  //var address = "0x007c5e822b66C5463a465ffC17BCf7E02aA9E1A4";
+function getProofs() {
+   var id = 1001;
+  var address = "0xBA3bf4CA212F841970ca38EA28117aDb6F881Aa9";
   hasheandoElementos = hashToken(id, address);
   pruebas = merkleTree.getHexProof(hasheandoElementos);
   console.log(pruebas);
@@ -43,8 +43,8 @@ function getRootFromMT() {
   return root;
 }
 
-// construyendoMerkleTree();
-// cosntruyendoPruebas();
+getRootFromMT();
+getProofs();
 
 
 module.exports = { getRootFromMT, getProofs };

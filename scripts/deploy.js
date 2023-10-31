@@ -13,7 +13,7 @@ const {
   deploySCNoUp,
 } = require("../utils");
 
-const { getRootFromMT } = require("../utils/merkleTree");
+const { getRootFromMT } = require("../utils/newMerkletree");
 const testingWallet = "0xF90a9359f2422b6885c900091f2aCc93E0933B7a"
 
 var MINTER_ROLE = getRole("MINTER_ROLE");
@@ -125,11 +125,11 @@ async function addLiquidity() {
   const LiquidityProvider = await ethers.getContractFactory("LiquidityProvider");
   const liquidityProvider = await LiquidityProvider.attach(liquidityProviderAddress);
 
-  const txBBTKN = await bbitesToken.transfer(liquidityProviderAddress, amountADesired);
+  const txBBTKN = await bbitesToken.mint(liquidityProviderAddress, amountADesired);
   const resBBTKN = await txBBTKN.wait();
   console.log("hash tx send BBTKN", resBBTKN.hash);
 
-  const txUSDC = await usdc.transfer(liquidityProviderAddress, amountBDesired);
+  const txUSDC = await usdc.mint(liquidityProviderAddress, amountBDesired);
   const resUSDC = await txUSDC.wait();
   console.log("hash Tx send USDC", resUSDC.hash);
   console.log("Deploying contracts with the account:", deployer.address);

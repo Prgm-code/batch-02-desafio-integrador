@@ -1,6 +1,5 @@
 const { ethers, Contract, parseEther } = require("ethers");
-const getRootFromMT = require("../utils/merkleTreeFE").getRootFromMT;
-const getProofs = require("../utils/merkleTreeFE").getProofs;
+const { getProofs } = require("../utils/newMerkletree");
 const addresses = require("../utils/addresses").addresses;
 
 const usdcTknAbi = require("../artifacts/contracts/USDCoin.sol/USDCoin.json").abi;
@@ -8,29 +7,24 @@ const bbitesTokenAbi = require("../artifacts/contracts/BBitesToken.sol/BBitesTok
 const publicSaleAbi = require("../artifacts/contracts/PublicSale.sol/PublicSale.json").abi;
 const nftTknAbi = require("../artifacts/contracts/CuyCollectionNft.sol/CuyCollectionNft.json").abi;
 
-
 var provider, signer, account;
 var usdcTkContract, bbitesTknContract, pubSContract, nftContract;
 var usdcAddress, bbitesTknAdd, pubSContractAdd;
 
 function initSCsGoerli() {
   provider = new ethers.BrowserProvider(window.ethereum);
-
   usdcAddress = addresses.USDC_CONTRACT_ADDRESS;
   bbitesTknAdd = addresses.BBTKN_CONTRACT_ADDRESS;
   pubSContractAdd = addresses.PUBS_CONTRACT_ADDRESS;
-
-  usdcTkContract = new Contract(usdcAddress, usdcTknAbi, provider); // = new Contract(...
-  bbitesTknContract = new Contract(bbitesTknAdd, bbitesTokenAbi, provider); // = new Contract(...
-  pubSContract = new Contract(pubSContractAdd, publicSaleAbi, provider); // = new Contract(...
+  usdcTkContract = new Contract(usdcAddress, usdcTknAbi, provider);
+  bbitesTknContract = new Contract(bbitesTknAdd, bbitesTokenAbi, provider);
+  pubSContract = new Contract(pubSContractAdd, publicSaleAbi, provider);
 }
 
 async function initSCsMumbai() {
   provider = new ethers.BrowserProvider(window.ethereum);
-
   var nftAddress = addresses.CCNFT_CONTRACT_ADDRESS;
-
-  nftContract = new Contract(nftAddress, nftTknAbi, provider); // = new Contract(...
+  nftContract = new Contract(nftAddress, nftTknAbi, provider);
 }
 
 async function setUpListeners() {
@@ -53,8 +47,8 @@ async function setUpListeners() {
   const balanceElusdc = document.getElementById("usdcBalance");
   usdcUpdate.addEventListener("click", async function () {
     try {
-      var balance = await bbitesTknContract.balanceOf(account);
-      balanceElusdc.innerHTML = ethers.formatUnits(balance, 18);
+      var balance = await usdcTkContract.balanceOf(account);
+      balanceElusdc.innerHTML = ethers.formatUnits(balance, 6);
     } catch (error) {
       console.log(error);
     }
@@ -79,7 +73,7 @@ async function setUpListeners() {
   approveBbitesBtn.addEventListener("click", async function () {
     try {
 
-      let amount = approveInput.value;
+      let amount = ethers.parseUnits(approveInput.value, 18);
       let tx = await bbitesTknContract
         .connect(signer)
         .approve(pubSContractAdd, amount);
@@ -90,8 +84,6 @@ async function setUpListeners() {
       approveError.innerHTML = `Error en la transaccion ${error.message}`;
       console.log(error);
     }
-
-
   });
 
   // APPROVE USDC
@@ -101,7 +93,8 @@ async function setUpListeners() {
   const approveSuccessUSDC = document.getElementById("approveSuccessUSDC");
   approveUsdcBtn.addEventListener("click", async function () {
     try {
-      let amount = approveInputUSDC.value;
+      let amount = ethers.parseUnits(approveInputUSDC.value, 6);
+      console.log(amount);
       let tx = await usdcTkContract
         .connect(signer)
         .approve(pubSContractAdd, amount);
@@ -121,7 +114,7 @@ async function setUpListeners() {
   const purchaseError = document.getElementById("purchaseError");
   purchaseButton.addEventListener("click", async function () {
     try {
-      let amount = purchaseInput.value;
+      let amount = parseInt(purchaseInput.value, 10);
       let tx = await pubSContract
         .connect(signer)
         .purchaseWithTokens(amount);;
@@ -134,8 +127,6 @@ async function setUpListeners() {
     }
   });
 
-
-
   // purchaseWithUSDC
   const purchaseButtonUSDC = document.getElementById("purchaseButtonUSDC");
   const purchaseInputUSDC = document.getElementById("purchaseInputUSDC");
@@ -146,7 +137,8 @@ async function setUpListeners() {
     try {
       let id = parseInt(purchaseInputUSDC.value, 10);
       console.log(id);
-      let amount = amountInUSDCInput.value;
+      let amount = ethers.parseUnits(amountInUSDCInput.value, 6);
+      console.log(amount);
       let tx = await pubSContract
         .connect(signer)
         .purchaseWithUSDC(amount, id);
@@ -157,9 +149,7 @@ async function setUpListeners() {
       console.log(error);
       purchaseErrorUSDC.innerHTML = `Error en la transaccion ${error.message}`;
     }
-
   });
-
 
   // purchaseWithEtherAndId
   const purchaseButtonEtherId = document.getElementById("purchaseButtonEtherId");
@@ -206,7 +196,6 @@ async function setUpListeners() {
       sendEtherError.innerHTML = error.message;
       console.error("Error al enviar Ether:", error.message);
     }
-
   })
 
   // getPriceForId
@@ -224,8 +213,7 @@ async function setUpListeners() {
       console.log(error);
     }
   })
-
-
+  let proofs;
 
   // getProofs
   const getProofsButtonId = document.getElementById("getProofsButtonId");
@@ -236,9 +224,9 @@ async function setUpListeners() {
   getProofsButtonId.addEventListener("click", async () => {
     let id = inputIdProofId.value;
     let address = inputAccountProofId.value;
-    var proofs = getProofs(id, address);
-   // navigator.clipboard.writeText(JSON.stringify(proofs));
-   whiteListToInputProofsId.value = JSON.stringify(proofs);
+    proofs = getProofs(id, address);
+    navigator.clipboard.writeText(JSON.stringify(proofs));
+    whiteListToInputProofsId.value = JSON.stringify(proofs);
     showProofsTextId.innerHTML = JSON.stringify(proofs);
   });
 
@@ -251,19 +239,19 @@ async function setUpListeners() {
   safeMintWhiteListBttnId.addEventListener("click", async () => {
 
     try {
-      let proofs = whiteListToInputProofsId.value;
-      let proofsArray = JSON.parse(proofs).map(ethers.hexlify);
+      let proofsString = whiteListToInputProofsId.value;
+      let proofsArray = JSON.parse(proofsString).map(ethers.hexlify);
       console.log("Proofs:", proofsArray);
-      
-      let to = whiteListToInputId.value;
+
+      let to = ethers.getAddress(whiteListToInputId.value);
       console.log("To:", to);
-  
-      let tokenId = parseInt(whiteListToInputTokenId.value, 10); 
+
+      let tokenId = parseInt(whiteListToInputTokenId.value, 10);
       console.log("Token ID:", tokenId);
-  
+      let proofs_ = proofs.map(ethers.hexlify);
       let tx = await nftContract
         .connect(signer)
-        .safeMintWhiteList(to, tokenId, proofsArray);
+        .safeMintWhiteList(proofs_, to, tokenId);
       let res = await tx.wait();
       console.log(res.hash);
       safeMintWhiteListSuccessId.innerHTML = `Transaccion exitosa con hash ${res.hash}`
@@ -273,11 +261,6 @@ async function setUpListeners() {
     }
   });
 
-
-  // usar ethers.hexlify porque es un array de bytes
-  // var proofs = document.getElementById("whiteListToInputProofsId").value;
-  // proofs = JSON.parse(proofs).map(ethers.hexlify);
-
   // buyBack
   const buyBackBttn = document.getElementById("buyBackBttn");
   const buyBackInputId = document.getElementById("buyBackInputId");
@@ -286,7 +269,7 @@ async function setUpListeners() {
   buyBackBttn.addEventListener("click", async () => {
     try {
       let tokenId = buyBackInputId.value;
-      let tx = await pubSContract
+      let tx = await nftContract
         .connect(signer)
         .buyBack(tokenId);
       let res = await tx.wait();
@@ -303,12 +286,12 @@ async function setUpListeners() {
 async function setUpEventsContracts() {
   var pubSList = document.getElementById("pubSList");
   pubSContract.on("PurchaseNftWithId", (buyer, tokenId, value, event) => {
-   pubSList.innerHTML = `Last Event: Buyer: ${buyer}, Token ID: ${tokenId.toString()}`;
+    pubSList.innerHTML = `Last Event: Buyer: ${buyer}, Token ID: ${tokenId.toString()}`;
   });
 
   var bbitesListEl = document.getElementById("bbitesTList");
   bbitesTknContract.on("Transfer", (from, to, amount, event) => {
-   bbitesListEl.innerHTML = `Last Event: From: ${from}, To: ${to}, Amount: ${amount.toString()}`;
+    bbitesListEl.innerHTML = `Last Event: From: ${from}, To: ${to}, Amount: ${amount.toString()}`;
   });
 
   var nftList = document.getElementById("nftList");
@@ -335,7 +318,6 @@ async function setUp() {
 
   await setUpEventsContracts();
 
-  //buildMerkleTree();
 }
 
 setUp()

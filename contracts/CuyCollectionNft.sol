@@ -57,13 +57,18 @@ contract CuyCollectionNft is
     }
 
     //mappping para llevar la contabiolidad de los NFTs emitidos y quiemados
-    mapping(uint256 => mapping(address => bool)) public mintedNft;
+    mapping(uint256 => bool) public burnedNft;
 
     function VerifyMerkleProof(
-        bytes32 leaf,
-        bytes32[] memory _proofs
+        bytes32[] memory proof,
+        address addr,
+        uint256 id
     ) public view returns (bool) {
-        return MerkleProof.verify(_proofs, root, leaf);
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(id, addr))));
+        if (!MerkleProof.verify(proof, root, leaf)) {
+            return false;
+        }
+        return true;
     }
 
     function safeMint(
@@ -71,26 +76,18 @@ contract CuyCollectionNft is
         uint256 tokenId
     ) public onlyRole(MINTER_ROLE) {
         _safeMint(to, tokenId);
-        //mintedNft[tokenId][to] = true;
-    }
-
-     function _hashearInfo(
-        address to,
-        uint256 tokenId
-    ) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(tokenId, to));
     }
 
     function safeMintWhiteList(
+        bytes32[] memory proofs,
         address to,
-        uint256 tokenId,
-        bytes32[] memory proofs
+        uint256 tokenId
     ) public {
         //aplicar merkle treee para la lista de billeteras de la 1000 a al 1999
         // Verificar que el tokenId esté en el rango de 1000 a 1999
         require(tokenId >= 1000 && tokenId <= 1999, "TokenId not in range");
-        require(VerifyMerkleProof(_hashearInfo(to, tokenId), proofs), "Invalid proof");
-        safeMint(to, tokenId);
+        require(VerifyMerkleProof(proofs, to, tokenId), "Invalid proof for mint");
+        _safeMint(to, tokenId);
     }
 
     function buyBack(uint256 tokenId) public {
@@ -102,9 +99,9 @@ contract CuyCollectionNft is
             "You are not the owner of this NFT"
         );
         // todo verificar que el NFT se encuentre dentro de la lista whitelist de NFTs (1000 a 1999)
-        require(!mintedNft[tokenId][msg.sender], "Token already burned");
+        require(!burnedNft[tokenId], "Token already burned");
         _burn(tokenId);
-        mintedNft[tokenId][msg.sender] = true; // Marcar este NFT como inactivo para este usuario
+        burnedNft[tokenId] = true; // Marcar este NFT como inactivo para este usuario
         emit Burn(msg.sender, tokenId);
     }
 

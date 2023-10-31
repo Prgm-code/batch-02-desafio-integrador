@@ -33,8 +33,10 @@ contract PublicSale is
 
     IERC20 BBTKN;
     IERC20 USDC;
-    address routerAddress;
-    address factoryAddress;
+    address public routerAddress;
+    address public factoryAddress;
+    address public BBTKNaddress;
+    address public USDCaddress;
     IUniSwapV2Router02 router;
 
     mapping(uint256 => bool) public nftPurchased;
@@ -58,6 +60,8 @@ contract PublicSale is
         USDC = IERC20(_USDCaddress);
         routerAddress = _routerAddress;
         factoryAddress = _factoryAddress;
+        BBTKNaddress = _BBTKNaddress;
+        USDCaddress = _USDCaddress;
         router = IUniSwapV2Router02(_routerAddress);
     }
 
