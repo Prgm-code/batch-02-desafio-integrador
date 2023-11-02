@@ -44,9 +44,9 @@ let cachedFixture = null;
 async function loadCUYNFTFixture() {
     const [owner, minterAddr, addr1] = await ethers.getSigners();
     const cuyNFT = await deploySC("CuyCollectionNft", ["CuyCollection", "CCNFT", minterAddr.address]);
-    
+
     const { walletList, randomIdWallets } = await createRandomWallets(5);
-    
+
     return {
         owner,
         minterAddr,
@@ -57,7 +57,7 @@ async function loadCUYNFTFixture() {
     };
 }
 
-before("Seteando contratos", async function() {
+before("Seteando contratos", async function () {
     if (!cachedFixture) {
         const fixtureData = await loadFixture(loadCUYNFTFixture);
         cachedFixture = fixtureData;
@@ -110,7 +110,7 @@ describe("Minteo Whitelist", async function () {
         expect(await cuyNFT.root()).to.equal(ROOT);
     });
 
-    it("Mintea los nft de 5 billeteras random a traves de safemint whitelist con las proofs address e id y luego buyBack los nft y espera el evento del contrato ", async function () {
+    it("Mintea los nft de 5 billeteras random a traves de safemint whitelist con las proofs address e id", async function () {
         // testeo de minteo de nft a 5 billeteras random con las proofs address e id
 
         for (let i = 0; i < walletList.length; i++) {
@@ -125,12 +125,13 @@ describe("Minteo Whitelist", async function () {
             //console.log("proof: ", _proof);
             //console.log("to: ", _to);
             //console.log("id: ", _id);
-            console.log(`mintando NFT a la billetera ${walletAddress} con id ${id} `)
+            console.log(`minteando NFT a la billetera ${walletAddress} con id ${id} `)
             const tx = await cuyNFT.connect(wallet).safeMintWhiteList(_proof, _to, _id);
             await tx.wait();
             expect(await cuyNFT.balanceOf(walletAddress)).to.equal(1);
         }
-
+    });
+    it("realiza el buyback de los nft de 5 billeteras random a traves de buyback con el id y espera el evento del contrato ", async function () {
         // testeo de buyBack de nft a 5 billeteras random con las proofs address e id
         for (let i = 0; i < walletList.length; i++) {
             let id = randomIdWallets[i];
@@ -156,18 +157,18 @@ describe("Minteo Whitelist", async function () {
             expect(emittedId).to.equal(_id);
             expect(emittedAddress).to.equal(walletAddress);
             expect(eventEmitted).to.be.true;
-            
+
         }
 
     });
-    it ("realiza nuevameente buyback i debe fallar porque ya no hay nft en la billetera", async function () {
+    it("realiza nuevameente buyback i debe fallar porque ya no hay nft en la billetera", async function () {
 
         let id = randomIdWallets[0];
         let walletAddress = walletList[0].address
         let wallet = walletList[0];
 
         let _id = parseInt(id, 10);
-    
+
         try {
             const tx = await cuyNFT.connect(wallet).buyBack(_id);
             await tx.wait();
