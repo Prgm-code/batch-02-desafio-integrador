@@ -39,59 +39,38 @@ async function createRandomWallets(num) {
     return { walletList, randomIdWallets };
 }
 
+let cachedFixture = null;
+
 async function loadCUYNFTFixture() {
-
     const [owner, minterAddr, addr1, addr2, addr3, addr4, addr5] = await ethers.getSigners();
-    console.log("minterAddr.address: ", minterAddr.address);
-
     const cuyNFT = await deploySC("CuyCollectionNft", ["CuyCollection", "CCNFT", minterAddr.address]);
-    console.log("cuyNFT.address: ", await cuyNFT.getAddress());
-
+    
+    const { walletList, randomIdWallets } = await createRandomWallets(5);
+    
     return {
         owner,
         minterAddr,
         addr1,
-        addr2,
-        addr3,
-        addr4,
-        addr5,
         cuyNFT,
         walletList,
+        randomIdWallets
     };
 }
 
-let owner;
-let minterAddr;
-let addr1;
-let addr2;
-let addr3;
-let addr4;
-let addr5;
-let cuyNFT;
-let walletList;
+before("Seteando contratos", async function() {
+    if (!cachedFixture) {
+        const fixtureData = await loadFixture(loadCUYNFTFixture);
+        cachedFixture = fixtureData;
+    }
 
-before("Seteando contratos ", async function () {
-    const {
-        owner: _owner,
-        minterAddr: _minterAddr,
-        addr1: _addr1,
-        addr2: _addr2,
-        addr3: _addr3,
-        addr4: _addr4,
-        addr5: _addr5,
-        cuyNFT: _cuyNFT,
-        walletList: _walletList,
-    } = await loadCUYNFTFixture();
-    owner = _owner;
-    minterAddr = _minterAddr;
-    addr1 = _addr1;
-    addr2 = _addr2;
-    addr3 = _addr3;
-    addr4 = _addr4;
-    addr5 = _addr5;
-    cuyNFT = _cuyNFT;
-    walletList = _walletList;
+    owner = cachedFixture.owner;
+    minterAddr = cachedFixture.minterAddr;
+    addr1 = cachedFixture.addr1;
+    cuyNFT = cachedFixture.cuyNFT;
+    walletList = cachedFixture.walletList;
+    randomIdWallets = cachedFixture.randomIdWallets;
 });
+
 describe("Testing Cuy Collection NFT", function () {
     it("Debe comprobar  el rol de minter a la cuenta minterAddr", async function () {
         console.log("minterAddr.address: ", minterAddr.address);
@@ -133,7 +112,6 @@ describe("Minteo Whitelist", async function () {
 
     it("Mintea los nft de 5 billeteras random a traves de safemint whitelist con las proofs address e id y luego buyBack los nft y espera el evento del contrato ", async function () {
         // testeo de minteo de nft a 5 billeteras random con las proofs address e id
-        const { walletList, randomIdWallets } = await createRandomWallets(5);
 
         for (let i = 0; i < walletList.length; i++) {
             let id = randomIdWallets[i];
