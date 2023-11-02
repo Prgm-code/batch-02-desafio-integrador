@@ -42,7 +42,7 @@ async function createRandomWallets(num) {
 let cachedFixture = null;
 
 async function loadCUYNFTFixture() {
-    const [owner, minterAddr, addr1, addr2, addr3, addr4, addr5] = await ethers.getSigners();
+    const [owner, minterAddr, addr1] = await ethers.getSigners();
     const cuyNFT = await deploySC("CuyCollectionNft", ["CuyCollection", "CCNFT", minterAddr.address]);
     
     const { walletList, randomIdWallets } = await createRandomWallets(5);
@@ -159,6 +159,22 @@ describe("Minteo Whitelist", async function () {
             
         }
 
+    });
+    it ("realiza nuevameente buyback i debe fallar porque ya no hay nft en la billetera", async function () {
+
+        let id = randomIdWallets[0];
+        let walletAddress = walletList[0].address
+        let wallet = walletList[0];
+
+        let _id = parseInt(id, 10);
+    
+        try {
+            const tx = await cuyNFT.connect(wallet).buyBack(_id);
+            await tx.wait();
+        } catch (e) {
+            expect(e.message).to.equal("VM Exception while processing transaction: reverted with reason string 'ERC721: invalid token ID'");
+        }
+        expect(await cuyNFT.balanceOf(walletAddress)).to.equal(0);
     });
 
 
