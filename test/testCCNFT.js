@@ -95,9 +95,7 @@ describe("Testing Cuy Collection NFT", function () {
         const tx = await cuyNFT.connect(minterAddr).safeMint(minterAddr.address, 2001);
         await tx.wait();
         expect(await cuyNFT.balanceOf(addr1.address)).to.equal(0);
-    }
-
-    );
+    });
 
 });
 
