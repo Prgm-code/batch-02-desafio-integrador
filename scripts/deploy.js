@@ -182,9 +182,9 @@ async function deployPublicSale() {
 async function deploy() {
    // await deployMumbai()
   //await deployGoerli()
-  // await addLiquidity()
+   await addLiquidity()
   // 
-  await deployPublicSale()
+ // await deployPublicSale()
 }
 
 deploy().catch((error) => {

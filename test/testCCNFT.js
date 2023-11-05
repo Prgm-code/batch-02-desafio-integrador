@@ -100,6 +100,7 @@ describe("Testing Cuy Collection NFT", function () {
 });
 
 describe("Minteo Whitelist", async function () {
+    
     it("Asigna y el root del merkletree al contrato a traves de setMerkleRoot", async function () {
         const ROOT = getRootFromMT();
         const tx = await cuyNFT.connect(owner).setMerkleRoot(ROOT);

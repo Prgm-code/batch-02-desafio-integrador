@@ -128,19 +128,20 @@ contract PublicSale is
         return router.getAmountIn(amountOut, reserveIn, reserveOut);
     }
 
-    function getAmountsIn(uint amountOut) public view returns (uint amountIn) {
+    function getAmountsIn(
+        uint256 amountOut
+    ) public view returns (uint256[] memory amountIn) {
         address[] memory path = new address[](2);
-        path[0] = address(USDC);
-        path[1] = address(BBTKN);
+        path[0] = USDCaddress;
+        path[1] = BBTKNaddress;
 
-        // Obtener cantidades estimadas de entrada
-        uint[] memory amounts = router.getAmountsIn(
+        amountIn = router.getAmountsIn(
             factoryAddress,
             amountOut,
             path
         );
 
-        return amounts[0]; // Devuelve la cantidad estimada de USDC necesaria
+        return amountIn; // Devuelve la cantidad estimada de USDC necesaria
     }
 
     function purchaseWithEtherAndId(uint256 _id) public payable {
