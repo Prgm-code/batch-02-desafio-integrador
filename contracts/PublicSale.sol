@@ -10,7 +10,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUp
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import {IUniSwapV2Router02} from "./Interfaces.sol";
+import {IUniswapV2Router02} from "./Interfaces.sol";
 
 /// @custom:security-contact patricio@prgmdev.com
 contract PublicSale is
@@ -37,7 +37,7 @@ contract PublicSale is
     address public factoryAddress;
     address public BBTKNaddress;
     address public USDCaddress;
-    IUniSwapV2Router02 router;
+    IUniswapV2Router02 router;
 
     mapping(uint256 => bool) public nftPurchased;
 
@@ -62,7 +62,7 @@ contract PublicSale is
         factoryAddress = _factoryAddress;
         BBTKNaddress = _BBTKNaddress;
         USDCaddress = _USDCaddress;
-        router = IUniSwapV2Router02(_routerAddress);
+        router = IUniswapV2Router02(_routerAddress);
     }
 
     function purchaseWithTokens(uint256 _id) public whenNotPaused {
@@ -124,24 +124,18 @@ contract PublicSale is
         uint amountOut,
         uint reserveIn,
         uint reserveOut
-    ) public returns (uint amountIn) {
+    ) public view returns (uint amountIn) {
         return router.getAmountIn(amountOut, reserveIn, reserveOut);
     }
 
     function getAmountsIn(
         uint256 amountOut
-    ) public view returns (uint256[] memory amountIn) {
+    ) public view returns (uint256[] memory) {
         address[] memory path = new address[](2);
         path[0] = USDCaddress;
         path[1] = BBTKNaddress;
 
-        amountIn = router.getAmountsIn(
-            factoryAddress,
-            amountOut,
-            path
-        );
-
-        return amountIn; // Devuelve la cantidad estimada de USDC necesaria
+        return router.getAmountsIn(amountOut, path);
     }
 
     function purchaseWithEtherAndId(uint256 _id) public payable {
