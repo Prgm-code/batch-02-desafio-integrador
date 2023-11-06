@@ -6,12 +6,8 @@ require("dotenv").config();
 module.exports = {
   solidity: "0.8.19",
   networks: {
-    hardhat: {
-      forking: {
-        url: process.env.GOERLI_TESNET_URL,
-        blockNumber: 9615285 // Block Before the contract starts Sale (Block 9615286)
-      }
-    },
+
+    
     localhost: {
       url: "http://127.0.0.1:8545",
     },

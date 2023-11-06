@@ -126,7 +126,7 @@ describe("Comprobanco el contrato PublicSale", function () {
 
         console.log("Precio del NFT", price.toString());
 
-        const tx = await bbitesToken.connect(owner).approve(publicSale, price);
+        let tx = await bbitesToken.connect(owner).approve(publicSale, price);
         await tx.wait();
         await publicSale.connect(owner).purchaseWithTokens(_id);
         await new Promise(resolve => setTimeout(resolve, 1000)); // Espero 1 segundo para que se emita el evento
@@ -143,12 +143,12 @@ describe("Comprobanco el contrato PublicSale", function () {
 
         console.log("Precio del NFT", price.toString());
 
-        await USDC.connect(owner).approve(publicSale, usdcAmount).wait();
+        let tx = await USDC.connect(owner).approve(publicSale, usdcAmount);
 
 
         console.log("Aprobacion de tokens USDC para la compra del NFT", tx.hash);
 
-        await publicSale.connect(owner).purchaseWithUSDC(usdcAmount, _id).wait();
+        await publicSale.connect(owner).purchaseWithUSDC(usdcAmount, _id);
 
         console.log("Compra de NFT con USDC", tx.hash);
         await new Promise(resolve => setTimeout(resolve, 1000)); // Espero 1 segundo para que se emita el evento
