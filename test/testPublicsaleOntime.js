@@ -53,4 +53,9 @@ networks: {
         blockNumber: 9615285 // Block Before the contract starts Sale (Block 9615286)
       }
     }, 
+
+    or 
+
+ npx hardhat node --fork https://eth-goerli.g.alchemy.com/v2/c1oANXqAu408URmDw9WFiymFLKsYFYn- --fork-block-number 9615285
+
 */
